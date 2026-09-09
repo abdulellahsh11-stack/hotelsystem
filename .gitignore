@@ -17,3 +17,4 @@ reports/
 test_results/
 scripts/generate_*.py
 venv/
+.claude/worktrees/

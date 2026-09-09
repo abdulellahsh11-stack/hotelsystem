@@ -14,7 +14,7 @@ services/subscription.py — حالة الاشتراك والتنبيه قبل �
 from __future__ import annotations
 
 import math
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 ALERT_WINDOW_HOURS = 24      # اليوم ٢٩: تنبيهٌ قبل القفل بـ٢٤ ساعة
 
@@ -76,6 +76,110 @@ def evaluate(client: dict | None, now: datetime | None = None) -> dict:
     out["locked"] = hours <= 0
     out["alert"] = 0 < hours <= ALERT_WINDOW_HOURS
     return out
+
+
+# ── حالة الاشتراك: تفعيل · ترقية/هبوط · إلغاء · تجربة (خالصٌ) ────────
+
+TRIAL_DAYS = 30
+
+# رُتب الخطط — للترقية والهبوط والحمايات الخادمية.
+PLAN_RANK = {"trial": 0, "starter": 1, "business": 2, "enterprise": 3}
+
+# أدنى خطةٍ تُتيح كل وحدة. غير المذكور متاحٌ للجميع (starter فأعلى ضمنياً
+# عبر القفل). الحماية خادميّة: القرار لا يُترك للواجهة.
+MODULE_MIN_PLAN = {
+    "channels": "business",       # ربط قنوات الحجز
+    "insights": "business",       # التحليلات
+    "accounting_export": "business",
+    "api": "enterprise",          # وصول API
+    "multi_property": "enterprise",
+}
+
+
+def _add_months(start: datetime, months: int) -> datetime:
+    """يضيف أشهراً إلى تاريخٍ دون مكتبة خارجية (يضبط نهاية الشهر)."""
+    m = start.month - 1 + int(months)
+    year = start.year + m // 12
+    month = m % 12 + 1
+    # آخر يومٍ صالح في الشهر الهدف
+    day = min(start.day, [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+                          else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+    return start.replace(year=year, month=month, day=day)
+
+
+def start_trial(now: datetime | None = None) -> dict:
+    """حقول بدء التجربة — ثلاثون يوماً."""
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    end = now + timedelta(days=TRIAL_DAYS)
+    return {"status": "trial", "plan": "trial",
+            "trial_end": end.date().isoformat(),
+            "sub_end": end.date().isoformat()}
+
+
+def activate(client: dict | None, plan: str, months: int = 1,
+             now: datetime | None = None) -> dict:
+    """يفعّل/يمدّد الاشتراك. يمدّد من الأبعد بين الآن ونهايةٍ قائمة (فلا
+    تضيع أيامٌ متبقّية عند التجديد المبكّر). يعيد حقول الحساب للحفظ.
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    plan = plan if plan in PLAN_RANK else "starter"
+    months = max(1, int(months or 1))
+    current_end = _parse_end((client or {}).get("sub_end"))
+    base = current_end if (current_end and current_end > now) else now
+    new_end = _add_months(base, months)
+    return {"status": "active", "plan": plan,
+            "sub_start": now.date().isoformat(),
+            "sub_end": new_end.date().isoformat()}
+
+
+def change_plan(client: dict | None, new_plan: str) -> dict:
+    """ترقية أو هبوط — يبدّل الخطة ويُبقي نهاية المدّة كما هي.
+
+    يعيد {"plan":.., "direction": "upgrade"|"downgrade"|"same"}؛ الفوترة
+    التناسبية (proration) عند البوابة، وهذا يعكس القرار في حالتنا.
+    """
+    new_plan = new_plan if new_plan in PLAN_RANK else "starter"
+    old = (client or {}).get("plan", "trial")
+    old_rank, new_rank = PLAN_RANK.get(old, 0), PLAN_RANK[new_plan]
+    direction = ("upgrade" if new_rank > old_rank
+                 else "downgrade" if new_rank < old_rank else "same")
+    return {"plan": new_plan, "direction": direction}
+
+
+def cancel(client: dict | None, now: datetime | None = None) -> dict:
+    """إلغاءٌ يعمل: يوقف التجديد ويُبقي الوصول حتى نهاية المدّة المدفوعة.
+
+    لا يُقفل فوراً (العميل دفع للمدّة)، بل status=canceled وsub_end كما
+    هو — فـ`is_accessible` يبقى صحيحاً حتى ينقضي.
+    """
+    return {"status": "canceled"}
+
+
+def is_accessible(client: dict | None, now: datetime | None = None) -> bool:
+    """هل للمنشأة وصولٌ الآن؟ نشطة/تجربة/ملغاة-بعد لم تنقضِ مدّتها."""
+    ev = evaluate(client, now=now)
+    status = (client or {}).get("status") or ev.get("status")
+    if status == "suspended":
+        return False
+    return not ev["locked"]
+
+
+def can_use(client: dict | None, module: str, now: datetime | None = None) -> bool:
+    """حمايةٌ خادميّة: هل تُتيح خطة المنشأة هذه الوحدة، ووصولها ساري؟
+
+    قرارٌ لا يُترك للواجهة: وحدةٌ تفوق الخطة، أو اشتراكٌ مقفل، تُمنع.
+    """
+    if not is_accessible(client, now=now):
+        return False
+    need = MODULE_MIN_PLAN.get(module)
+    if not need:
+        return True
+    have = PLAN_RANK.get((client or {}).get("plan", "trial"), 0)
+    return have >= PLAN_RANK[need]
 
 
 def sanitize_payment(data) -> dict:

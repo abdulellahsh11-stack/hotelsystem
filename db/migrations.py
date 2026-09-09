@@ -302,6 +302,41 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- سجلّ أحداث بوابة الدفع (ميسر) — كل حدث ويب هوك يُسجَّل هنا.
+-- dedup_key فريدٌ فيمنع معالجة الحدث مرّتين (لا رسوم مكرّرة، إيديمبوتنسي).
+-- client_id قد يكون NULL لحدثٍ رُفض توقيعه (لا نثق بحمولته لننسبه لمنشأة).
+CREATE TABLE IF NOT EXISTS payment_events (
+    id          SERIAL PRIMARY KEY,
+    client_id   VARCHAR(50) REFERENCES clients(id) ON DELETE CASCADE,
+    dedup_key   VARCHAR(160) UNIQUE,
+    event_type  VARCHAR(50),
+    payment_id  VARCHAR(120),
+    amount      DECIMAL(12,2),
+    currency    VARCHAR(10) DEFAULT 'SAR',
+    status      VARCHAR(30),
+    raw         JSONB,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pe_client  ON payment_events(client_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pe_payment ON payment_events(payment_id);
+
+-- نيّات إرسال الإيصالات — يبنيها services/receipts.queue_receipt ويقرأها
+-- المُرسِل لاحقاً. status: queued → sent → failed (لإعادة المحاولة).
+CREATE TABLE IF NOT EXISTS receipt_intents (
+    id          SERIAL PRIMARY KEY,
+    client_id   VARCHAR(50) REFERENCES clients(id) ON DELETE CASCADE,
+    payment_id  VARCHAR(120),
+    recipient   VARCHAR(200),
+    lang        VARCHAR(5) DEFAULT 'ar',
+    subject     TEXT,
+    body_html   TEXT,
+    status      VARCHAR(20) DEFAULT 'queued',
+    attempts    INTEGER DEFAULT 0,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_ri_client ON receipt_intents(client_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ri_status ON receipt_intents(status);
+
 -- ================================================================
 -- جداول الأمان — Security Tables (Isolation Audit)
 -- ================================================================
