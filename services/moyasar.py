@@ -219,7 +219,7 @@ def apply_business(store, ev: dict) -> dict:
     المنشأة من metadata الموقَّعة (ev['client_id'])؛ حدثٌ بلا منشأة لا
     يُطبَّق. يحرس لمس القاعدة use_postgres.
     """
-    from services import payments, subscription
+    from services import payments, receipts, subscription
 
     cid = ev.get("client_id")
     action = ev.get("action")
@@ -234,6 +234,11 @@ def apply_business(store, ev: dict) -> dict:
         _save_account(store, client, cid, updates)
         payments.record(db, cid, ev.get("amount"), method="online",
                         reference=ev.get("payment_id"))
+        receipts.queue_receipt(db, {"amount": ev.get("amount"),
+                                    "currency": ev.get("currency"),
+                                    "payment_id": ev.get("payment_id"),
+                                    "reference": ev.get("reference")},
+                               client or {"id": cid})
         return {"applied": True, "action": "activated", "sub_end": updates["sub_end"]}
     if action == "refunded":
         _save_account(store, client, cid, {"status": "past_due"})
