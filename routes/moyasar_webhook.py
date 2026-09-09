@@ -29,10 +29,17 @@ async def moyasar_webhook(request: Request):
         payload = json.loads(raw.decode("utf-8")) if raw else {}
     except (ValueError, UnicodeDecodeError):
         payload = {}
+    store = request.app.state.store
     db = request.app.state.db
     result = moyasar.process_webhook(db, raw, signature, payload)
     if not result.get("ok"):
         return JSONResponse(status_code=401, content={"success": False,
                             "error": result.get("reason", "unauthorized")})
+    applied = None
+    if not result.get("duplicate"):
+        try:
+            applied = moyasar.apply_business(store, result["event"])
+        except Exception:                        # لا نُسقط الاستجابة للبوابة
+            moyasar.alert_webhook_failure(db, "apply_failed", result.get("event"))
     return {"success": True, "duplicate": result.get("duplicate", False),
-            "action": result.get("action")}
+            "action": result.get("action"), "applied": applied}

@@ -205,3 +205,47 @@ def process_webhook(db, raw_body: bytes, signature: str,
         return {"ok": True, "duplicate": True, "action": ev["action"],
                 "event": ev}
     return {"ok": True, "duplicate": False, "action": ev["action"], "event": ev}
+
+
+def apply_business(store, ev: dict) -> dict:
+    """يعكس الحدث على الأعمال بعد التحقّق والتسجيل ومنع التكرار.
+
+    - **مدفوع** → يفعّل/يمدّد اشتراك المنشأة (مزامنة الحالة مع القاعدة)
+      ويسجّل الدفعة في payments.
+    - **مسترد** → يعيد المنشأة إلى «متأخّرة» كي تراجَع (لا نقفل تلقائياً
+      دون قرارٍ إداري).
+    - **فاشل** → لا تغيير في الوصول؛ الحدث مسجَّلٌ للمتابعة.
+
+    المنشأة من metadata الموقَّعة (ev['client_id'])؛ حدثٌ بلا منشأة لا
+    يُطبَّق. يحرس لمس القاعدة use_postgres.
+    """
+    from services import payments, subscription
+
+    cid = ev.get("client_id")
+    action = ev.get("action")
+    if not cid:
+        return {"applied": False, "reason": "no_client"}
+    db = getattr(store, "db", None) or store
+    client = store.get_client(cid) if hasattr(store, "get_client") else None
+    if action == "paid":
+        months = int((ev.get("raw") or {}).get("months") or 1)
+        plan = (ev.get("raw") or {}).get("plan") or (client or {}).get("plan") or "starter"
+        updates = subscription.activate(client, plan, months)
+        _save_account(store, client, cid, updates)
+        payments.record(db, cid, ev.get("amount"), method="online",
+                        reference=ev.get("payment_id"))
+        return {"applied": True, "action": "activated", "sub_end": updates["sub_end"]}
+    if action == "refunded":
+        _save_account(store, client, cid, {"status": "past_due"})
+        return {"applied": True, "action": "past_due"}
+    return {"applied": False, "reason": action}
+
+
+def _save_account(store, client, cid: str, updates: dict) -> None:
+    """يحفظ حقول الحساب دون لمس settings._account مباشرةً."""
+    if not hasattr(store, "save_client"):
+        return
+    c = dict(client or {"id": cid})
+    c.setdefault("id", cid)
+    c.update(updates)
+    store.save_client(c)
