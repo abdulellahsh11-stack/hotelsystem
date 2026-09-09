@@ -69,6 +69,34 @@
         </div>
       </div>
 
+
+      <!-- ═══ الرؤى الذكية — مستشار فندقي يقرأ أرقامك ═══ -->
+      <section class="ai-sec" id="ai-advisor">
+        <h2>اسأل عن أرقامك <span class="ai-badge">Claude</span></h2>
+        <div class="ai-body">
+          <div id="ai-state"><div class="ai-off">جارٍ التحقق…</div></div>
+
+          <div id="ai-form" hidden>
+            <div class="ai-chips">
+              <button class="ai-chip">ما أبرز ما تقوله أرقامي هذا الشهر؟</button>
+              <button class="ai-chip">كيف أرفع نسبة الإشغال؟</button>
+              <button class="ai-chip">هل تسعيري مناسب؟</button>
+              <button class="ai-chip">ما الحجوزات التي تحتاج متابعة؟</button>
+            </div>
+            <textarea id="ai-q" rows="3"
+              placeholder="اكتب سؤالك عن أرقام منشأتك… (Ctrl+Enter للإرسال)"></textarea>
+            <div class="ai-actions">
+              <button class="ai-send" id="ai-send">اسأل</button>
+              <span class="ai-note">
+                تُرسَل أعدادٌ وإجماليات فقط — <strong>لا أسماء نزلاء ولا أرقام هوية</strong>.
+              </span>
+            </div>
+          </div>
+
+          <div id="ai-thread"></div>
+        </div>
+      </section>
+
       <!-- Connected data sources strip -->
       <div class="an-sources" data-m-rise>
         <div class="an-src-head">
@@ -980,5 +1008,6 @@ renderTierBar({ exc:0, good:0, low:0, bad:0 });
   }
 })();
 </script>
+<script src="/static/dheuof/modules/12-analytics/js/advisor.js"></script>
 </body>
 </html>
