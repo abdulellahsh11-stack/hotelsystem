@@ -18,14 +18,17 @@ Phase E: تفعيل الإنتاج بعد الاعتمادات الرسمية
 
 ## المهام (Tasks)
 
-### ZATCA (P0)
-- [ ] `db/migrations`: جدولا `zatca_credentials` و`zatca_invoices` (عزل + UUID فريد).
-- [ ] `services/gov/zatca/onboarding.py`: توليد keypair + CSR → Compliance CSID → فحوص → Production CSID.
-- [ ] `services/gov/zatca/invoice.py`: بناء UBL 2.1 · ICV/PIH · التوقيع (ECDSA secp256k1) · TLV QR.
-- [ ] `services/gov/zatca/client.py`: Reporting/Clearance مع Idempotency + Retry + تخزين الاستجابة الخام.
-- [ ] `services/gov/zatca/reconcile.py`: مهمة دورية للمطابقة.
-- [ ] `routes/zatca.py`: إصدار/إعادة إرسال/حالة (بحارس `require_manager`).
-- [ ] اختبارات: متّجهات ZATCA الرسمية · كسر التوقيع · إيديمبوتنسي · Sandbox E2E.
+### ZATCA (P0) — **مُرحَّل لمزوّد معتمَد، لكل مشترك مزوّده**
+ضيوف = محاسبة عامّة + محوّل محايد. التوقيع/التخليص عند المزوّد (ترحيل المسؤولية).
+- [ ] `db/migrations`: `zatca_provider_config` (لكل `client_id`: مزوّد + API + اعتمادات مشفّرة) و`zatca_submissions` (dedup فريد + تدقيق).
+- [ ] `services/gov/zatca/provider.py`: واجهة `ZatcaProvider` موحّدة (`submit_invoice`/`submit_credit_note`/`status`).
+- [ ] `services/gov/zatca/adapters/`: محوّل لكل مزوّد (ClearTax · InvoiceQ · Wafeq …) — يُضاف عند الطلب.
+- [ ] `services/gov/zatca/payload.py`: بناء حمولة الفاتورة العامّة من المحاسبة.
+- [ ] `services/gov/zatca/submit.py`: إرسال عند الطلب + Idempotency + Retry + تخزين الاستجابة الخام.
+- [ ] `services/gov/zatca/reconcile.py`: مهمة دورية تُبرز غير المُخلّص/المرفوض.
+- [ ] `routes/zatca.py`: ربط المشترك بمزوّده · إرسال/إعادة/حالة (بحارس `require_manager`).
+- [ ] اختبارات: عقد المحوّل بـFake Provider · إرسال بلا مزوّد (لا ادّعاء امتثال) · إيديمبوتنسي · رفض المزوّد · Sandbox.
+- [ ] **تحقّق تشغيلي**: تثبيت قائمة المزوّدين المعتمَدين من موقع ZATCA + DPA لكل مزوّد.
 
 ### شموس (P0 — محجوبٌ باعتمادٍ رسمي)
 - [ ] `db/migrations`: جدول `shomoos_registrations` (dedup فريد).
