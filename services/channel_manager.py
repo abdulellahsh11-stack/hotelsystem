@@ -158,6 +158,10 @@ class ChannelManager:
             return {"channel_code": channel_code, "status": "connected",
                     "key_hint": _mask_secret(api_key)}
         hint, fp = _mask_secret(api_key), _fingerprint(api_key)
+        # المفتاح الحقيقي يُخزَّن مشفّراً في خزنة الاعتمادات (لا قناعاً غير
+        # قابلٍ للاستخدام) كي تستطيع المحوّلات النداء الفعلي على القناة.
+        from services import integration_credentials as vault
+        vault.save(self.db, client_id, channel_code, {"api_key": api_key})
         self.db.execute(
             """INSERT INTO channel_connections
                (client_id, channel_code, status, key_hint, key_fp)
@@ -168,6 +172,11 @@ class ChannelManager:
             (client_id, channel_code, hint, fp))
         self._log(client_id, channel_code, "connect", detail="ربط القناة")
         return {"channel_code": channel_code, "status": "connected", "key_hint": hint}
+
+    def get_secret(self, client_id: str, channel_code: str) -> dict | None:
+        """اعتماد القناة المفكوك للمحوّل (لا لـHTTP). None إن غاب."""
+        from services import integration_credentials as vault
+        return vault.get(self.db, client_id, channel_code)
 
     def disconnect(self, client_id: str, channel_code: str) -> bool:
         if not getattr(self.db, "use_postgres", False):

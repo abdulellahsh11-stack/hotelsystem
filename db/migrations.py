@@ -337,6 +337,21 @@ CREATE TABLE IF NOT EXISTS receipt_intents (
 CREATE INDEX IF NOT EXISTS idx_ri_client ON receipt_intents(client_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ri_status ON receipt_intents(status);
 
+-- خزنة اعتمادات التكاملات — لكل مشترك لكل خدمة، مشفّرة.
+-- secret_enc: JSON الاعتماد مشفّراً (AES-256-GCM عبر guest_crypto).
+-- key_hint: قناعٌ للعرض فقط (لا يُستخدم). لا يخرج secret_enc عبر HTTP أبداً.
+-- service: moyasar_guest | booking | almosafer | agoda | expedia | zatca | shomoos | ntmp ...
+CREATE TABLE IF NOT EXISTS integration_credentials (
+    client_id   VARCHAR(50) REFERENCES clients(id) ON DELETE CASCADE,
+    service     VARCHAR(40) NOT NULL,
+    secret_enc  TEXT,
+    key_hint    VARCHAR(60),
+    enabled     BOOLEAN DEFAULT TRUE,
+    updated_at  TIMESTAMPTZ DEFAULT NOW(),
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (client_id, service)
+);
+
 -- ================================================================
 -- جداول الأمان — Security Tables (Isolation Audit)
 -- ================================================================
