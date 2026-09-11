@@ -30,14 +30,15 @@ Phase E: تفعيل الإنتاج بعد الاعتمادات الرسمية
 - [ ] اختبارات: عقد المحوّل بـFake Provider · إرسال بلا مزوّد (لا ادّعاء امتثال) · إيديمبوتنسي · رفض المزوّد · Sandbox.
 - [ ] **تحقّق تشغيلي**: تثبيت قائمة المزوّدين المعتمَدين من موقع ZATCA + DPA لكل مزوّد.
 
-### شموس (P0 — محجوبٌ باعتمادٍ رسمي)
-- [ ] `db/migrations`: جدول `shomoos_registrations` (dedup فريد).
-- [ ] `services/gov/shomoos/model.py`: حزمة النزيل الداخلية + تقليل البيانات.
-- [ ] `services/gov/shomoos/adapter.py`: **واجهة** `register/update` — `NotImplemented` حتى المواصفة الرسمية.
-- [ ] `services/gov/shomoos/queue.py`: طابور + إعادة محاولة + تدقيق.
-- [ ] `services/gov/shomoos/reconcile.py`: إبراز الحجوزات غير المُسجَّلة.
-- [ ] ربط حدث check-in في `routes/hotel_ops.py`.
-- [ ] اختبارات: عقد المحوّل بـFake · كسر (نزيل بلا هوية) · إيديمبوتنسي · reconciliation.
+### شموس + السياحة NTMP (P0 — لكل مشترك اعتماداته، محجوبٌ باعتمادٍ رسمي)
+نفس نموذج الزكاة: المشترك يرفع اعتماداته الخاصّة (تكلفة ومسؤولية عليه).
+- [ ] `db/migrations`: `gov_provider_config` (لكل client_id×service اعتمادات مشفّرة) و`gov_registrations` (dedup فريد).
+- [ ] `services/gov/model.py`: حزمة النزيل الداخلية + تقليل البيانات (PDPL).
+- [ ] `services/gov/adapters/shomoos.py` و`ntmp.py`: **واجهة** `register/update` — `NotImplemented` حتى المواصفة الرسمية.
+- [ ] `services/gov/queue.py`: طابور + إعادة محاولة + تدقيق (موحّد للخدمتين).
+- [ ] `services/gov/reconcile.py`: إبراز الحجوزات غير المُسجَّلة/المُبلَّغة.
+- [ ] ربط حدث check-in في `routes/hotel_ops.py` + إعداد رفع الاعتمادات في `routes/`.
+- [ ] اختبارات: عقد المحوّل بـFake · كسر (نزيل بلا هوية · بلا اعتماد) · إيديمبوتنسي · reconciliation.
 
 ## الاعتماديات
 | المهمة | تعتمد على |

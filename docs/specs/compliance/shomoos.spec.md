@@ -1,10 +1,18 @@
-# مواصفة: تكامل شموس (تسجيل النزلاء — وزارة الداخلية)
+# مواصفة: تكامل شموس + السياحة NTMP (تسجيل وإبلاغ النزلاء)
 
 **الحالة:** Draft — **بانتظار المواصفة الرسمية** · **الأولوية:** P0
-**تحذير حاكم:** **مواصفة شموس الرسمية غير عامّة.** كل ما يخصّ صيغة السلك
-(نقاط النهاية، الحقول الدقيقة، المصادقة) **`TODO: Requires Official Shomoos
-API Specification`** — لا يُخترَع ولا يُفترَض. تُصمَّم الحدود الداخلية كاملةً
-الآن، ويُملأ محوّل السلك (Adapter) حين تُتاح المواصفة/الاتفاقية الرسمية.
+**تحذير حاكم:** **مواصفتا شموس وNTMP الرسميتان غير عامّتين.** كل ما يخصّ
+صيغة السلك (نقاط النهاية، الحقول، المصادقة) **`TODO: Requires Official
+Specification`** — لا يُخترَع. تُصمَّم الحدود الداخلية كاملةً الآن، ويُملأ
+محوّل السلك (Adapter) حين تُتاح المواصفة/الاتفاقية.
+
+### نموذج «لكل مشترك اعتماداته» (كما في الزكاة)
+تكاملا شموس والسياحة **بمقابلٍ ماليّ**، وكل منشأةٍ مرخّصة تملك **وصولها
+الحكومي الخاص** (بيانات اعتماد/توكن تصدرها لها الجهة). لذلك:
+- **المشترك يرفع اعتماداته الخاصّة** (شموس · NTMP) في إعداداته.
+- ضيوف يربط **نيابةً عنه** عبر محوّل محايد — فتنتقل **التكلفة والمسؤولية** للمشترك.
+- ضيوف لا يحتفظ باعتمادٍ مركزيّ ولا يتحمّل الرسوم؛ عزلٌ تامّ لكل منشأة.
+- منشأةٌ بلا اعتمادٍ مربوط: تُعرَض «غير مربوطة بشموس/السياحة» بلا ادّعاء امتثال.
 
 ---
 
@@ -72,14 +80,21 @@ Shomoos Adapter                ← الوحيد الذي يعرف صيغة سل�
 ## ٤. نموذج البيانات (مقترح)
 
 ```
-shomoos_registrations(id, client_id, guest_id, booking_id,
-                      dedup_key UNIQUE,          -- (guest_id:booking_id)
-                      status,                    -- pending|registered|failed
-                      shomoos_ref,               -- مرجع شموس (من الاستجابة)
-                      request_raw, response_raw, -- تدقيق
-                      attempts, created_at, updated_at)
+gov_provider_config(client_id, service, credentials_enc, api_base,
+                    enabled, env, created_at,
+                    PRIMARY KEY(client_id, service))   -- service: shomoos | ntmp
+                    -- اعتمادات كل مشترك، مشفّرة، لكل خدمة على حدة
+
+gov_registrations(id, client_id, service, guest_id, booking_id,
+                  dedup_key UNIQUE,          -- (service:guest_id:booking_id)
+                  status,                    -- pending|registered|failed|rejected
+                  gov_ref,                   -- مرجع الجهة (من الاستجابة)
+                  request_raw, response_raw, -- تدقيق
+                  attempts, created_at, updated_at)
 ```
-- عزلٌ بـ`client_id`؛ `dedup_key` فريد يمنع التسجيل المزدوج.
+- جدولٌ موحّد للخدمتين (شموس/NTMP) — نفس المنطق، محوّلٌ لكلٍّ.
+- عزلٌ بـ`client_id`؛ `dedup_key` فريد يمنع التسجيل/الإبلاغ المزدوج.
+- اعتمادات كل مشترك مشفّرة (نمط `guest_encryption`، مفتاح منفصل).
 
 ---
 
