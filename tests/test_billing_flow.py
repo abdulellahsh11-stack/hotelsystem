@@ -65,6 +65,11 @@ class _Store:
         if "INSERT INTO receipt_intents" in q:
             self.receipts.append(p)
             return {"id": len(self.receipts)}
+        if q.startswith("DELETE FROM payment_events"):     # تحرير الحجز
+            self.events.discard(p[0])
+            return None
+        if q.startswith("UPDATE payment_events SET status"): # received→processed
+            return None
         return None
 
 
@@ -146,6 +151,33 @@ class TestFullCustomerJourney:
         store.save_client(client)
         assert store.clients["h1"]["status"] == "canceled"
         assert subscription.is_accessible(store.get_client("h1")) is True
+
+    def test_apply_failure_releases_reservation_for_retry(self, monkeypatch):
+        # لو فشل التطبيق (المال قُبض) يجب أن يُحرَّر الحجز فتُعاد المحاولة —
+        # لا أن يُعدّ مكرّراً فيضيع التفعيل.
+        monkeypatch.setenv("MOYASAR_WEBHOOK_SECRET", SECRET)
+        store = _Store()
+        calls = {"n": 0}
+        real_activate = subscription.activate
+
+        def flaky_activate(*a, **k):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise RuntimeError("db blip")
+            return real_activate(*a, **k)
+        monkeypatch.setattr(subscription, "activate", flaky_activate)
+
+        pl = _paid_webhook()
+        body = json.dumps(pl).encode()
+        r1 = moyasar.handle_webhook(store.db, store, body, _sign(body), pl)
+        assert r1["ok"] is False and r1.get("retry") is True
+        assert store.clients["h1"]["status"] == "trial"     # لم يُفعَّل بعد
+        assert len(store.events) == 0                        # الحجز حُرِّر
+
+        # إعادة إرسال ميسر تنجح الآن
+        r2 = moyasar.handle_webhook(store.db, store, body, _sign(body), pl)
+        assert r2["ok"] is True and r2["duplicate"] is False
+        assert store.clients["h1"]["status"] == "active"
 
     def test_tampered_webhook_rejected_end_to_end(self):
         store = _Store()

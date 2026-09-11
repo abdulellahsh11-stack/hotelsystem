@@ -83,7 +83,7 @@ class TestParse:
                                            "metadata": {"client_id": "h1"}}})
         assert ev["amount"] == 150.0 and ev["currency"] == "SAR"
         assert ev["action"] == "paid" and ev["client_id"] == "h1"
-        assert ev["dedup_key"] == "p1:paid"
+        assert ev["dedup_key"] == "p1:payment_paid"    # نوع الحدث الخام لا الفعل
 
     def test_zero_decimal_currency(self):
         ev = moyasar.parse_event({"data": {"id": "p2", "status": "paid",
@@ -149,4 +149,38 @@ class TestProcess:
             body = json.dumps(pl).encode()
             res = moyasar.process_webhook(db, body, _sign(body), pl)
             assert res["duplicate"] is False
-        assert len(db.seen) == 2        # p1:paid و p1:refunded
+        assert len(db.seen) == 2        # payment_paid و payment_refunded
+
+
+class TestFixes:
+    """إصلاحات مراجعة الكود: الخطة من metadata · نوع الحدث للـdedup ·
+    الحمولة الخام للتدقيق · تحرير الحجز عند فشل التطبيق."""
+
+    def test_plan_and_months_from_metadata(self):
+        ev = moyasar.parse_event({"type": "payment_paid",
+                                  "data": {"id": "p1", "status": "paid", "amount": 100,
+                                           "metadata": {"client_id": "h1",
+                                                        "plan": "business", "months": "3"}}})
+        assert ev["plan"] == "business" and ev["months"] == 3
+
+    def test_plan_parsed_from_reference(self):
+        ev = moyasar.parse_event({"type": "payment_paid",
+                                  "data": {"id": "p2", "status": "paid", "amount": 100,
+                                           "metadata": {"client_id": "h1",
+                                                        "reference": "sub:enterprise"}}})
+        assert ev["plan"] == "enterprise"
+
+    def test_authorized_and_captured_not_collapsed(self):
+        # نوعان مختلفان لنفس الدفعة → مفتاحان مختلفان (لا يبتلع القبضُ الإذنَ)
+        auth = moyasar.parse_event({"type": "payment_authorized",
+                                    "data": {"id": "p3", "status": "authorized", "amount": 100}})
+        cap = moyasar.parse_event({"type": "payment_captured",
+                                   "data": {"id": "p3", "status": "captured", "amount": 100}})
+        assert auth["dedup_key"] != cap["dedup_key"]
+
+    def test_raw_column_stores_original_payload(self):
+        pl = {"type": "payment_paid", "id": "root",
+              "data": {"id": "p4", "status": "paid", "amount": 100,
+                       "metadata": {"client_id": "h1"}}}
+        ev = moyasar.parse_event(pl)
+        assert ev["payload"] is pl        # الحمولة الأصلية محفوظة للتدقيق

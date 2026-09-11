@@ -31,15 +31,12 @@ async def moyasar_webhook(request: Request):
         payload = {}
     store = request.app.state.store
     db = request.app.state.db
-    result = moyasar.process_webhook(db, raw, signature, payload)
+    # تدفّقٌ آمن: يحجز ثم يطبّق ثم يؤكّد، ويحرّر الحجز عند الفشل.
+    result = moyasar.handle_webhook(db, store, raw, signature, payload)
     if not result.get("ok"):
-        return JSONResponse(status_code=401, content={"success": False,
-                            "error": result.get("reason", "unauthorized")})
-    applied = None
-    if not result.get("duplicate"):
-        try:
-            applied = moyasar.apply_business(store, result["event"])
-        except Exception:                        # لا نُسقط الاستجابة للبوابة
-            moyasar.alert_webhook_failure(db, "apply_failed", result.get("event"))
+        reason = result.get("reason", "unauthorized")
+        # فشل التطبيق قابلٌ للإعادة → 500 كي تعيد ميسر الإرسال؛ التوقيع → 401.
+        code = 500 if result.get("retry") else 401
+        return JSONResponse(status_code=code, content={"success": False, "error": reason})
     return {"success": True, "duplicate": result.get("duplicate", False),
-            "action": result.get("action"), "applied": applied}
+            "action": result.get("action"), "applied": result.get("applied")}

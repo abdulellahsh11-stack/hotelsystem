@@ -18,7 +18,6 @@ services/receipts.py — إيصالات البريد الإلكتروني (بن�
 from __future__ import annotations
 
 import html
-import json
 import logging
 
 log = logging.getLogger("dheuof.receipts")
@@ -182,7 +181,7 @@ def queue_receipt(db, payment: dict, client: dict, lang: str = "ar") -> dict:
            VALUES (%s, %s, %s, %s, %s, %s, 'queued')
            RETURNING id""",
         (client_id, pay_id, to, _lang(lang)["lang"], msg["subject"],
-         json.dumps(msg, ensure_ascii=False)),
+         msg["body_html"]),           # جسم HTML المُصيَّر — لا كتلة JSON
         fetch="one")
     return {"sent": False, "persisted": bool(row), "subject": msg["subject"],
             "to": to}
