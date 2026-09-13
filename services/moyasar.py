@@ -106,9 +106,20 @@ def parse_event(payload: dict) -> dict:
     event_type = str(p.get("type") or data.get("type") or "").strip().lower()
     currency = data.get("currency") or "SAR"
     action = classify(status)
-    # مفتاح منع التكرار: معرّف الدفعة + الفعل (فحدثان مختلفان لنفس الدفعة
-    # — دفعٌ ثم استرداد — يُعالَجان، وإعادةُ الحدث نفسه لا تتكرّر).
-    dedup = f"{payment_id}:{action}" if payment_id else ""
+    reference = str(meta.get("reference") or data.get("description") or "").strip() or None
+    # الخطة المشتراة من metadata الموقَّعة، أو من المرجع "sub:business".
+    plan = str(meta.get("plan") or "").strip().lower() or None
+    if not plan and reference and reference.lower().startswith("sub:"):
+        plan = reference.split(":", 1)[1].strip().lower() or None
+    try:
+        months = int(meta.get("months")) if meta.get("months") else None
+    except (TypeError, ValueError):
+        months = None
+    # مفتاح منع التكرار: معرّف الدفعة + **نوع الحدث الخام** لا الفعل المُصنَّف
+    # — فدفعٌ ثم قبضٌ (authorized/captured) حدثان يُعالَجان، بينما إعادةُ
+    # الحدث نفسه (نفس النوع) لا تتكرّر. الفعل يجمع الأنواع فيبتلع القبض.
+    key_part = event_type or action
+    dedup = f"{payment_id}:{key_part}" if payment_id else ""
     return {
         "payment_id": payment_id,
         "event_type": event_type or action,
@@ -117,7 +128,10 @@ def parse_event(payload: dict) -> dict:
         "amount": _to_major(data.get("amount"), currency),
         "currency": str(currency).upper(),
         "client_id": str(meta.get("client_id") or "").strip() or None,
-        "reference": str(meta.get("reference") or data.get("description") or "").strip() or None,
+        "reference": reference,
+        "plan": plan,
+        "months": months,
+        "payload": p,          # الحمولة الموقَّعة الأصلية — تُخزَّن للتدقيق
         "dedup_key": dedup,
     }
 
@@ -154,11 +168,25 @@ def log_event(db, ev: dict, status: str) -> dict:
            RETURNING id""",
         (ev.get("client_id"), dedup, ev.get("event_type"), ev.get("payment_id"),
          ev.get("amount"), ev.get("currency"), status,
-         json.dumps(ev.get("raw") or ev, ensure_ascii=False)),
+         json.dumps(ev.get("payload") or ev, ensure_ascii=False)),
         fetch="one")
     logged = bool(row)
     return {"logged": logged, "duplicate": (dedup is not None and not logged),
             "persisted": True}
+
+
+def _set_status(db, dedup_key: str, status: str) -> None:
+    """يحدّث حالة حدثٍ محجوز (received → processed) بعد نجاح المعالجة."""
+    if dedup_key and _pg(db):
+        db.execute("UPDATE payment_events SET status=%s WHERE dedup_key=%s",
+                   (status, dedup_key))
+
+
+def _release(db, dedup_key: str) -> None:
+    """يحرّر حجز حدثٍ فشلت معالجته كي تُعيد البوابة إرساله فيُعالَج."""
+    if dedup_key and _pg(db):
+        db.execute("DELETE FROM payment_events WHERE dedup_key=%s AND status='received'",
+                   (dedup_key,))
 
 
 def alert_webhook_failure(db, reason: str, ev: dict | None = None) -> None:
@@ -207,6 +235,40 @@ def process_webhook(db, raw_body: bytes, signature: str,
     return {"ok": True, "duplicate": False, "action": ev["action"], "event": ev}
 
 
+def handle_webhook(db, store, raw_body: bytes, signature: str,
+                   payload: dict) -> dict:
+    """التدفّق الكامل الآمن: تحقّق → حجز → **تطبيق ثم تأكيد**.
+
+    نحجز الحدث (`received`) لمنع المعالجة المتزامنة المكرّرة، ثم نطبّق على
+    الأعمال، ثم نؤكّده (`processed`). لو فشل التطبيق **نحرّر الحجز** كي تُعيد
+    البوابة الإرسال فيُعالَج — فلا يضيع تفعيلٌ لأنّ المال قُبض. يعيد
+    `retry=True` عند الفشل كي يردّ المسار 5xx فتُعيد ميسر المحاولة.
+    """
+    if not verify_signature(raw_body, signature):
+        alert_webhook_failure(db, "invalid_signature")
+        return {"ok": False, "reason": "invalid_signature", "action": None}
+
+    ev = parse_event(payload)
+    if already_processed(db, ev["dedup_key"]):
+        return {"ok": True, "duplicate": True, "action": ev["action"], "event": ev}
+
+    res = log_event(db, ev, status="received")   # حجزٌ ذرّي (ON CONFLICT)
+    if res.get("duplicate"):
+        return {"ok": True, "duplicate": True, "action": ev["action"], "event": ev}
+
+    try:
+        applied = apply_business(store, ev)
+    except Exception as e:
+        _release(db, ev["dedup_key"])            # حرّر الحجز فتُعاد المحاولة
+        alert_webhook_failure(db, f"apply_failed: {e}", ev)
+        return {"ok": False, "reason": "apply_failed", "retry": True,
+                "action": ev["action"], "event": ev}
+
+    _set_status(db, ev["dedup_key"], "processed")
+    return {"ok": True, "duplicate": False, "action": ev["action"],
+            "event": ev, "applied": applied}
+
+
 def apply_business(store, ev: dict) -> dict:
     """يعكس الحدث على الأعمال بعد التحقّق والتسجيل ومنع التكرار.
 
@@ -228,18 +290,24 @@ def apply_business(store, ev: dict) -> dict:
     db = getattr(store, "db", None) or store
     client = store.get_client(cid) if hasattr(store, "get_client") else None
     if action == "paid":
-        months = int((ev.get("raw") or {}).get("months") or 1)
-        plan = (ev.get("raw") or {}).get("plan") or (client or {}).get("plan") or "starter"
+        # الخطة المشتراة من الحدث الموقَّع (metadata/reference) لا من خطة
+        # المنشأة القائمة — وإلا ضاعت ترقيةٌ دُفع ثمنها.
+        months = ev.get("months") or 1
+        plan = ev.get("plan") or (client or {}).get("plan") or "starter"
         updates = subscription.activate(client, plan, months)
         _save_account(store, client, cid, updates)
         payments.record(db, cid, ev.get("amount"), method="online",
                         reference=ev.get("payment_id"))
-        receipts.queue_receipt(db, {"amount": ev.get("amount"),
-                                    "currency": ev.get("currency"),
-                                    "payment_id": ev.get("payment_id"),
-                                    "reference": ev.get("reference")},
-                               client or {"id": cid})
-        return {"applied": True, "action": "activated", "sub_end": updates["sub_end"]}
+        try:                                     # الإيصال أثرٌ جانبيّ لا يُسقط التفعيل
+            receipts.queue_receipt(db, {"amount": ev.get("amount"),
+                                        "currency": ev.get("currency"),
+                                        "payment_id": ev.get("payment_id"),
+                                        "reference": ev.get("reference")},
+                                   client or {"id": cid})
+        except Exception as e:
+            log.error("receipt queue failed for %s: %s", cid, e)
+        return {"applied": True, "action": "activated", "plan": plan,
+                "sub_end": updates["sub_end"]}
     if action == "refunded":
         _save_account(store, client, cid, {"status": "past_due"})
         return {"applied": True, "action": "past_due"}
