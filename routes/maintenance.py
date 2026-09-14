@@ -46,15 +46,20 @@ async def create_order(request: Request, session=Depends(_require_client)):
         db = request.app.state.db
         cid = session["client_id"]
         if db.use_postgres:
+            from services import maintenance_report
             num = f"MO-{secrets.token_hex(4).upper()}"
+            loc_type = maintenance_report.normalize_location(data.get("location_type"))
+            loc_label = str(data.get("location_label") or "")[:120] or None
             row = db.execute("""
                 INSERT INTO maintenance_orders
                     (client_id,room_id,order_number,issue_type,description,
-                     priority,assigned_to,status,estimated_cost)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,'open',%s) RETURNING *
+                     priority,assigned_to,status,estimated_cost,
+                     location_type,location_label)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,'open',%s,%s,%s) RETURNING *
             """, (cid, data.get("room_id"), num, data.get("issue_type", "general"),
                   data.get("description", ""), data.get("priority", "normal"),
-                  data.get("assigned_to"), float(data.get("estimated_cost", 0) or 0)),
+                  data.get("assigned_to"), float(data.get("estimated_cost", 0) or 0),
+                  loc_type, loc_label),
                   fetch="one")
             return {"success": True, "data": dict(row)}
         return {"success": True, "data": data}
@@ -118,6 +123,42 @@ async def use_materials(order_id: int, request: Request, session=Depends(_requir
         raise
     except Exception as e:
         logger.error(f"Error in use_materials: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+
+
+@router.post("/orders/{order_id}/complete")
+async def complete_order(order_id: int, request: Request, session=Depends(_require_client)):
+    """إنجاز تذكرة الصيانة: يُحفظ التقرير وتُخصَم المواد المستخدَمة من مستودع
+    الصيانة تلقائياً في خطوةٍ واحدة (سلك · إضاءة · مفتاح…). الأمر يجب أن يخصّ
+    هذه المنشأة، والأصناف تُخصَم بمعرّفها معزولةً بالمنشأة (لا هبوط تحت الصفر)."""
+    try:
+        from services import maintenance_report, maintenance_stock
+        data = await request.json()
+        db = request.app.state.db
+        cid = session["client_id"]
+        actor = session.get("username") or session.get("role") or "maintenance"
+        if not db.use_postgres:
+            return {"success": True, "data": {"used": []}}
+        order = db.execute(
+            "SELECT order_number FROM maintenance_orders WHERE id=%s AND client_id=%s",
+            (order_id, cid), fetch="one")
+        if not order:
+            raise HTTPException(status_code=404, detail="أمر الصيانة غير موجود")
+        ref = dict(order).get("order_number") or order_id
+        used = maintenance_stock.consume(db, cid, data.get("materials"),
+                                         order_ref=ref, actor=actor)
+        report = maintenance_report.clean_report(data.get("report"))
+        db.execute(
+            """UPDATE maintenance_orders
+                 SET status='completed', report=%s, actual_cost=%s, completed_at=NOW()
+               WHERE id=%s AND client_id=%s""",
+            (report, float(data.get("actual_cost", 0) or 0), order_id, cid))
+        return {"success": True, "data": {"id": order_id, "status": "completed",
+                "report": report, "used": used}}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in complete_order: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
 
 
