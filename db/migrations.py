@@ -352,6 +352,32 @@ CREATE TABLE IF NOT EXISTS integration_credentials (
     PRIMARY KEY (client_id, service)
 );
 
+-- الحجز المباشر العامّ (API منفصل مثل Booking): الزائر يحجز على أي منشأة.
+-- idempotency_key فريد يمنع الحجز المكرّر؛ العزل بـclient_id (المنشأة).
+CREATE TABLE IF NOT EXISTS public_bookings (
+    id              VARCHAR(20) PRIMARY KEY,
+    client_id       VARCHAR(50) REFERENCES clients(id) ON DELETE CASCADE,
+    listing_id      INTEGER NOT NULL,
+    guest_name      VARCHAR(120) NOT NULL,
+    guest_phone     VARCHAR(30) NOT NULL,
+    guest_email     VARCHAR(160),
+    check_in        DATE NOT NULL,
+    check_out       DATE NOT NULL,
+    nights          INTEGER NOT NULL,
+    guests_count    INTEGER NOT NULL DEFAULT 1,
+    unit_price      NUMERIC(10,2),
+    subtotal        NUMERIC(10,2),
+    vat             NUMERIC(10,2),
+    total           NUMERIC(10,2),
+    currency        VARCHAR(10) DEFAULT 'SAR',
+    status          VARCHAR(20) DEFAULT 'confirmed',
+    idempotency_key VARCHAR(80) UNIQUE,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    CHECK (check_out > check_in)
+);
+CREATE INDEX IF NOT EXISTS idx_pb_unit ON public_bookings(client_id, listing_id, status);
+CREATE INDEX IF NOT EXISTS idx_pb_dates ON public_bookings(listing_id, check_in, check_out);
+
 -- ================================================================
 -- جداول الأمان — Security Tables (Isolation Audit)
 -- ================================================================
