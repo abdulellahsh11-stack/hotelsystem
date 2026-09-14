@@ -163,6 +163,13 @@ CREATE TABLE IF NOT EXISTS warehouse_items (
 );
 CREATE INDEX IF NOT EXISTS idx_warehouse_client ON warehouse_items(client_id, warehouse_type);
 
+-- استهلاك المخزون لكل نزيل: item_kind (مستهلَك/قابل لإعادة الاستخدام)،
+-- per_guest (النقص لكل نزيل — يحدّده المدير)، dirty_quantity (المتّسخ من
+-- الأصناف القابلة لإعادة الاستخدام كالفوط: نظيفة→متّسخة، والمجموع محفوظ).
+ALTER TABLE warehouse_items ADD COLUMN IF NOT EXISTS item_kind VARCHAR(20) DEFAULT 'consumable';
+ALTER TABLE warehouse_items ADD COLUMN IF NOT EXISTS per_guest DECIMAL(10,2) DEFAULT 0;
+ALTER TABLE warehouse_items ADD COLUMN IF NOT EXISTS dirty_quantity DECIMAL(10,2) DEFAULT 0;
+
 -- حركات المستودع
 CREATE TABLE IF NOT EXISTS warehouse_movements (
     id            SERIAL PRIMARY KEY,
