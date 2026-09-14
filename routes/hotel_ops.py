@@ -223,6 +223,16 @@ async def checkin_booking(booking_id: str, request: Request, session=Depends(req
         # خصم الضيافة أفضل-جهد: لا يمنع تسجيل الدخول، ولا يسقط صامتاً
         log.warning("تعذّر خصم الضيافة عند تسجيل دخول الحجز %s", booking_id)
 
+    # الاستهلاك التلقائي لكل نزيل (مستهلَك يَنقص · فوط نظيفة→متّسخة).
+    # الأشخاص = النزيل + مرافقوه.
+    try:
+        from services import stock_consumption
+        persons = int(data.get("guests", 1) or 1) + int(data.get("companions", 0) or 0)
+        stock_consumption.consume_for_stay(request.app.state.db, cid, persons,
+                                           booking_id=str(booking_id))
+    except Exception:
+        log.warning("تعذّر استهلاك المخزون التلقائي للحجز %s", booking_id)
+
     # المحاسبة الفورية (البند ٨): يُحتسَب المبلغ المدفوع مباشرة إن أُرسل.
     payment = None
     try:
