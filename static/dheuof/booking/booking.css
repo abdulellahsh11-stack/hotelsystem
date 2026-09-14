@@ -12,7 +12,7 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: "Tajawal", "IBM Plex Sans Arabic", "Segoe UI", sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   color: var(--bk-ink);
   background: var(--bk-paper);
   line-height: 1.6;

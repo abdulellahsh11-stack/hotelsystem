@@ -586,7 +586,7 @@
 .ct-doc-pv .sig .sb:first-child .line::after {
   content: "✓ Ahmed"; position: absolute;
   inset: -14px 0 auto 0;
-  font-family: "Cormorant", serif; font-style: italic;
+  font-family: Arial, Helvetica, sans-serif; font-style: italic;
   font-size: 14px; color: var(--brand-700);
   text-align: center;
 }
