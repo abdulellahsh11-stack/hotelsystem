@@ -490,7 +490,7 @@ body { background: var(--paper-tint); }
 .exp-btn.is-primary:hover { background: var(--brand-800); }
 
 '
-    + 'body{font-family:"Tajawal","Segoe UI",sans-serif;margin:32px;color:#1a1a1a;direction:rtl}'
+    + 'body{font-family:Arial,Helvetica,sans-serif;margin:32px;color:#1a1a1a;direction:rtl}'
     + 'h1{font-size:22px;margin:0 0 4px;color:var(--brand-700)}h2{font-size:16px;margin:22px 0 10px;color:var(--brand-700)}'
     + '.sub{font-size:12px;color:#666;margin:0 0 18px}'
     + 'table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px}'

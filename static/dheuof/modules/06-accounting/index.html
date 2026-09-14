@@ -1158,7 +1158,7 @@ window.onMonthChange = function() {
 function printPDF(title, bodyHTML) {
   var w = window.open('', '_blank');
   if (!w) { toast('تعذّر فتح نافذة الطباعة — تأكد من السماح بالنوافذ المنبثقة', true); return; }
-  var css = 'body{font-family:"Segoe UI",Arial,sans-serif;background:var(--white);color:#111;direction:rtl;padding:32px 40px;font-size:13px;line-height:1.6}'
+  var css = 'body{font-family:Arial,Helvetica,sans-serif;background:var(--white);color:#111;direction:rtl;padding:32px 40px;font-size:13px;line-height:1.6}'
     + 'h1{font-size:20px;color:var(--brand-700);margin:0 0 4px}'
     + 'h2{font-size:15px;color:var(--brand-700);margin:24px 0 10px;border-bottom:2px solid var(--gold-500);padding-bottom:4px}'
     + '.meta{font-size:11px;color:#888;margin-bottom:24px}'

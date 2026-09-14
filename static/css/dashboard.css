@@ -8,11 +8,11 @@
   --fg:var(--ink-900);--fg-2:var(--ink-500);--fg-3:var(--ink-400);
   --success-700:#2F6E54;--warning-700:#9A6D14;--danger-700:#8B3A2A;--info-700:#2A4F7A;
   --shadow-3:0 6px 16px rgba(20,17,14,.08),0 12px 32px rgba(20,17,14,.06);
-  --font-ar-display:"Reem Kufi","IBM Plex Sans Arabic",sans-serif;
-  --font-ar:"IBM Plex Sans Arabic","Reem Kufi",sans-serif;
-  --font-en:"IBM Plex Sans",sans-serif;
-  --font-en-display:"Cormorant",Georgia,serif;
-  --font-mono:"IBM Plex Mono",monospace;
+  --font-ar-display:Arial,Helvetica,sans-serif;
+  --font-ar:Arial,Helvetica,sans-serif;
+  --font-en:Arial,Helvetica,sans-serif;
+  --font-en-display:Arial,Helvetica,sans-serif;
+  --font-mono:Arial,Helvetica,sans-serif;
   --dur-fast:120ms;--ease-out:cubic-bezier(.22,.61,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}

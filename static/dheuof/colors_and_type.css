@@ -125,11 +125,12 @@
   --space-24: 96px;
 
   /* ── Type families ───────────────────────────────────────────────────── */
-  --font-ar-display: "Reem Kufi", "IBM Plex Sans Arabic", system-ui, sans-serif;
-  --font-ar:         "IBM Plex Sans Arabic", "Reem Kufi", system-ui, sans-serif;
-  --font-en-display: "Cormorant", "Times New Roman", Georgia, serif;
-  --font-en:         "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-  --font-mono:       "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  /* خطّ Arial موحّدٌ لكل المنصّة (عربي وإنجليزي، عرض ونصّ). */
+  --font-ar-display: Arial, Helvetica, sans-serif;
+  --font-ar:         Arial, Helvetica, sans-serif;
+  --font-en-display: Arial, Helvetica, sans-serif;
+  --font-en:         Arial, Helvetica, sans-serif;
+  --font-mono:       Arial, Helvetica, sans-serif;
 
   /* Default bilingual stacks — Arabic-first, Latin falls back gracefully */
   --font-display: var(--font-ar-display), var(--font-en-display);
