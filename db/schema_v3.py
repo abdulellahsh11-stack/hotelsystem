@@ -919,3 +919,18 @@ def run_v4_migrations(db) -> None:
     except Exception as e:
         if "already exists" not in str(e).lower():
             log.warning(f"payments.device_id col: {e}")
+
+    # ── موقع تذكرة الصيانة وتقريرها ─────────────────────────────
+    # location_type: room|corridor|outside|floor (غرفة/ممر/خارج/دور)
+    for col_def in (
+        "location_type VARCHAR(20)",
+        "location_label VARCHAR(120)",
+        "report TEXT",
+    ):
+        try:
+            db.execute(
+                f"ALTER TABLE maintenance_orders ADD COLUMN IF NOT EXISTS {col_def}"
+            )
+        except Exception as e:
+            if "already exists" not in str(e).lower():
+                log.warning(f"maintenance_orders.{col_def}: {e}")
