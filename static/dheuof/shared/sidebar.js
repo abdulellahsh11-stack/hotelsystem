@@ -59,7 +59,12 @@
           email: me.username || '',
           property: me.property_name || '',
           role: me.role,
-          plan: 'active'
+          plan: 'active',
+          // الخادم أكّد الجلسة الآن: نختمها بطابعٍ زمني. بدونه يراها
+          // `isSessionExpired` منتهيةً (لا ts رقمي) فيطرد مستخدماً داخلاً
+          // فعلاً إلى `/` عند أوّل نبضة مؤقّت (٦٠ث) — كان يخرج من «تسجيل
+          // نزيل جديد» خلال ثوانٍ. الخادم يبقى المرجع الحقيقي للانتهاء.
+          ts: Date.now()
         };
         try { localStorage.setItem('dheuof_session', JSON.stringify(SERVER_SESSION)); } catch(e) {}
         var sb = document.querySelector('.dh-sidebar');
