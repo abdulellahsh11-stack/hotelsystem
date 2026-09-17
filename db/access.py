@@ -54,6 +54,27 @@ def _session(request: Request) -> dict:
     return session
 
 
+def actor_label(session: dict) -> str:
+    """
+    اسم من نفّذ الإجراء، لسجلّ المساءلة: من أدخل البيانات أو غيّر حالة
+    الغرفة أو سجّل النزيل.
+
+    الاسم الكامل أوّلاً، ثم اسم المستخدم، وإلا تسمية الدور بالعربية —
+    فلا يبقى سطرٌ في السجلّ بلا فاعلٍ معروف. مالك المنشأة قد لا يحمل
+    `username`، فيُنسَب بصفته.
+    """
+    s = session or {}
+    name = str(s.get("full_name") or "").strip() or str(s.get("username") or "").strip()
+    if name:
+        return name[:100]
+    role = role_of(s)
+    try:
+        from services.staff_roles import ROLES
+        return str(ROLES.get(role, {}).get("label") or role)[:100]
+    except Exception:
+        return role[:100]
+
+
 def role_of(session: dict) -> str:
     """
     دور الجلسة، بافتراض `owner` عند غيابه.
