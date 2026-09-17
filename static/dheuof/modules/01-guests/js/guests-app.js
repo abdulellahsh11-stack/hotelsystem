@@ -333,9 +333,14 @@ window.showGuestDetail = function(gid){
    لأن رقم الدور مُسجَّل مع كل غرفة أصلاً، وطلبُه مرتين يفتح باب
    التناقض بينهما.
 ═══════════════════════════════════════════════ */
-var ROOM_STATUS_MAP = {
-  available:'available', occupied:'occupied', dirty:'hk-needed',
-  maintenance:'maintenance', blocked:'out-of-order'
+// اللون والتسمية من الخادم (services/room_status) — مصدرٌ واحد. هذه نسخةٌ
+// احتياطية لو غاب حقل الخادم فقط، لا مصدرٌ ثانٍ يتباعد عنه.
+var ROOM_STATUS_FALLBACK = {
+  available:  {label:'جاهزة',  hex:'#16a34a'},
+  occupied:   {label:'مشغولة', hex:'#b45309'},
+  cleaning:   {label:'نظافة',  hex:'#2563eb'},
+  maintenance:{label:'صيانة',  hex:'#dc2626'},
+  renovation: {label:'ترميم',  hex:'#6b7280'}
 };
 
 function floorLabel(n){
@@ -348,10 +353,14 @@ function buildFloorsFromRooms(rooms){
   var byFloor = {};
   rooms.forEach(function(r){
     var f = (r.floor === null || r.floor === undefined) ? 0 : Number(r.floor);
+    var st = r.status || 'available';
+    var fb = ROOM_STATUS_FALLBACK[st] || ROOM_STATUS_FALLBACK.available;
     (byFloor[f] = byFloor[f] || []).push({
       num: r.room_number,
       type: r.room_type || '—',
-      status: ROOM_STATUS_MAP[r.status] || 'available',
+      status: st,                                   // حالة الخادم المعتمدة
+      statusLabel: r.status_label || fb.label,      // التسمية من الخادم
+      statusHex: r.status_hex || fb.hex,            // اللون من الخادم
       guest: null,
       checkin: null,
       id: r.id
@@ -403,8 +412,12 @@ function loadRoomMap(){
 var floorOpen = [];   // يُبنى من عدد الأدوار الفعلي عند التحميل
 
 function statusLabel(s){
-  return {occupied:'مشغولة',available:'متاحة','hk-needed':'يحتاج تنظيف',maintenance:'صيانة',reserved:'محجوزة','out-of-order':'خارج الخدمة',cleaning:'تنظيف جارٍ'}[s]||s;
+  var fb = ROOM_STATUS_FALLBACK[s];
+  if(fb) return fb.label;
+  // مسمّياتٌ قديمة قد ترد من مسارات أخرى
+  return {'hk-needed':'نظافة',reserved:'محجوزة','out-of-order':'ترميم',dirty:'نظافة',blocked:'ترميم'}[s]||s;
 }
+function statusHex(s){ return (ROOM_STATUS_FALLBACK[s]||ROOM_STATUS_FALLBACK.available).hex; }
 
 function renderFloors(){
   var c = document.getElementById('floors-container');
@@ -413,7 +426,7 @@ function renderFloors(){
   FLOORS.forEach(function(fl,fi){
     var occ  = fl.rooms.filter(function(r){return r.status==='occupied';}).length;
     var avl  = fl.rooms.filter(function(r){return r.status==='available';}).length;
-    var hk   = fl.rooms.filter(function(r){return r.status==='hk-needed';}).length;
+    var hk   = fl.rooms.filter(function(r){return r.status==='cleaning';}).length;
     var mnt  = fl.rooms.filter(function(r){return r.status==='maintenance';}).length;
     var sec  = document.createElement('div'); sec.className='floor-section';
     var head = '<div class="floor-head" onclick="toggleFloor('+fi+')">'
@@ -432,10 +445,15 @@ function renderFloors(){
         var hint = rm.guest
           ? '<div class="guest-hint">'+rm.guest+'</div>'
           : (rm.checkin?'<div class="guest-hint">وصول '+rm.checkin+'</div>':'');
-        return '<div class="room-card '+rm.status+'" onclick="showRoomDetail('+fi+','+ri+')" title="غرفة '+rm.num+'">'
+        // اللون من الخادم مباشرةً: حدٌّ ملوّن وخلفيةٌ خفيفة، فتظهر الحالات
+        // الخمس بألوانها (أخضر/ذهبي/أزرق/أحمر/رمادي) بلا اعتمادٍ على أصناف CSS.
+        var hex = rm.statusHex || statusHex(rm.status);
+        var lbl = rm.statusLabel || statusLabel(rm.status);
+        return '<div class="room-card '+rm.status+'" onclick="showRoomDetail('+fi+','+ri+')" title="غرفة '+rm.num+'"'
+          +' style="border-right:4px solid '+hex+';box-shadow:inset 0 0 0 1px '+hex+'22">'
           +'<div class="rnum">'+rm.num+'</div>'
           +'<div class="rtype">'+rm.type+'</div>'
-          +'<div class="rstatus">'+statusLabel(rm.status)+'</div>'
+          +'<div class="rstatus" style="color:'+hex+';font-weight:600">'+lbl+'</div>'
           +hint
           +'</div>';
       }).join('')
@@ -456,7 +474,7 @@ window.toggleFloor = function(fi){
 window.showRoomDetail = function(fi,ri){
   var rm = FLOORS[fi].rooms[ri];
   var fl = FLOORS[fi];
-  var sc = {occupied:'info',available:'ok','hk-needed':'warn',maintenance:'danger',reserved:'gold'};
+  var sc = {occupied:'info',available:'ok',cleaning:'warn',maintenance:'danger',renovation:'gold'};
   var html = [
     {l:'رقم الغرفة', v:'<span style="font-family:var(--font-en);font-size:18px;font-weight:700">'+rm.num+'</span>'},
     {l:'نوع الغرفة', v:rm.type},
@@ -468,13 +486,11 @@ window.showRoomDetail = function(fi,ri){
   if(rm.checkin)  html.push('<div class="detail-row"><span class="lbl">تاريخ الوصول</span><span class="val" style="font-family:var(--font-mono)">'+rm.checkin+'</span></div>');
 
   var statusOptions = [
-    {val:'available',    label:'✅ متاحة ونظيفة'},
-    {val:'hk-needed',   label:'🧹 تحتاج تنظيف'},
-    {val:'cleaning',    label:'🫧 تنظيف جارٍ'},
-    {val:'maintenance', label:'🔧 صيانة'},
-    {val:'out-of-order',label:'⛔ خارج الخدمة'},
-    {val:'occupied',    label:'🛏 مشغولة'},
-    {val:'reserved',    label:'📅 محجوزة'}
+    {val:'available',   label:'🟢 جاهزة'},
+    {val:'occupied',    label:'🟡 مشغولة'},
+    {val:'cleaning',    label:'🔵 نظافة'},
+    {val:'maintenance', label:'🔴 صيانة'},
+    {val:'renovation',  label:'⚪ ترميم'}
   ];
   var act = '<select id="rm-status-sel" style="flex:1;padding:7px 12px;border:1px solid var(--ink-100);border-radius:6px;font-family:var(--font-ar);font-size:13px">'
     +statusOptions.map(function(s){ return '<option value="'+s.val+'"'+(rm.status===s.val?' selected':'')+'>'+s.label+'</option>'; }).join('')
@@ -505,13 +521,27 @@ window.markRoomMaint = function(fi,ri){
 window.changeRoomStatus = function(fi,ri){
   var sel = document.getElementById('rm-status-sel');
   if(!sel) return;
-  var newStatus = sel.value;
-  var num = FLOORS[fi].rooms[ri].num;
-  FLOORS[fi].rooms[ri].status = newStatus;
-  if(newStatus==='available'||newStatus==='out-of-order') FLOORS[fi].rooms[ri].guest = null;
-  var bd = document.querySelector('.dh-modal-bd'); if(bd) bd.remove();
-  renderFloors(); updateBadges();
-  toast('غرفة '+num+' — '+statusLabel(newStatus)+' ✓');
+  var room = FLOORS[fi].rooms[ri];
+  var newStatus = sel.value, num = room.num;
+  // يُحفَظ في الخادم فعلاً — لا تغييرٌ في الذاكرة يدّعي النجاح. الخادم
+  // يفرض صلاحية الكتابة (مالك/مدير المنشأة) ويردّ ٤٠٣ لمن لا يملكها.
+  if(!room.id){ toast('غرفة غير معرّفة في السجل', true); return; }
+  fetch('/api/rooms/'+room.id+'/status', {
+    method:'PATCH', credentials:'same-origin',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body: JSON.stringify({status:newStatus})
+  }).then(function(res){
+    return res.json().catch(function(){return {};}).then(function(b){return {ok:res.ok,b:b};});
+  }).then(function(r){
+    if(!r.ok){ toast((r.b&&(r.b.detail||r.b.error))||'تعذّر تغيير الحالة', true); return; }
+    room.status = newStatus;
+    room.statusLabel = statusLabel(newStatus);
+    room.statusHex = statusHex(newStatus);
+    if(newStatus==='available'||newStatus==='renovation') room.guest = null;
+    var bd = document.querySelector('.dh-modal-bd'); if(bd) bd.remove();
+    renderFloors(); updateBadges();
+    toast('غرفة '+num+' — '+statusLabel(newStatus)+' ✓');
+  }).catch(function(){ toast('تعذّر الاتصال بالخادم', true); });
 };
 
 /* ═══════════════════════════════════════════════
@@ -519,7 +549,7 @@ window.changeRoomStatus = function(fi,ri){
 ═══════════════════════════════════════════════ */
 function updateBadges(){
   var hkCount = 0;
-  FLOORS.forEach(function(fl){ fl.rooms.forEach(function(rm){ if(rm.status==='hk-needed') hkCount++; }); });
+  FLOORS.forEach(function(fl){ fl.rooms.forEach(function(rm){ if(rm.status==='cleaning') hkCount++; }); });
   var totalRooms = 0;
   var occCount   = 0;
   FLOORS.forEach(function(fl){
@@ -741,7 +771,7 @@ window.doCheckout = function(gid){
       FLOORS.forEach(function(fl){
         fl.rooms.forEach(function(rm){
           if(rm.num===g.room && rm.status==='occupied'){
-            rm.status='hk-needed'; rm.guest=null;
+            rm.status='cleaning'; rm.guest=null;
           }
         });
       });

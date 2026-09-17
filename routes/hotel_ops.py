@@ -18,6 +18,7 @@ from app_core import (
     require_client,
 )
 from db.access import require_manager
+from services import room_status as _room_status
 
 router = APIRouter()
 
@@ -448,6 +449,13 @@ async def get_room_map(request: Request, session=Depends(require_client)):
     by_floor: dict = {}
     for row in rows:
         room = dict(row)
+        # الحالة تُطبَّع ويُرفق لونها وتسميتها من المصدر الواحد، فتعرضها
+        # الخريطة موحّدةً بلا أن تُخمّن الواجهة لوناً.
+        deco = _room_status.decorate(room.get("status"))
+        room["status"] = deco["status"]
+        room["status_label"] = deco["label"]
+        room["status_color"] = deco["color"]
+        room["status_hex"] = deco["hex"]
         floor = 0 if room.get("floor") is None else int(room["floor"])
         by_floor.setdefault(floor, []).append(room)
 
@@ -474,6 +482,7 @@ async def get_room_map(request: Request, session=Depends(require_client)):
     return {
         "success": True,
         "data": {"floors": floors, "can_edit": can_edit,
+                 "legend": _room_status.legend(),
                  "hidden_count": len(hidden), "total_rooms": len(rows)},
     }
 
@@ -528,10 +537,11 @@ async def set_room_status(room_id: int, request: Request,
     """تغيير حالة غرفة من الخريطة مباشرةً — بصلاحية الكتابة لا بالعرض."""
     _require(session, "rooms.write")
     data = await request.json()
-    status = str(data.get("status") or "").strip()
-    if status not in ROOM_STATUSES:
+    raw = str(data.get("status") or "").strip()
+    if not _room_status.is_valid(raw):
         raise HTTPException(status_code=400,
                             detail=f"حالة غير معروفة. المسموح: {'، '.join(ROOM_STATUSES)}")
+    status = _room_status.normalize(raw)
     db = request.app.state.db
     affected = db.execute(
         "UPDATE rooms SET status=%s WHERE id=%s AND client_id=%s",
@@ -550,12 +560,23 @@ async def get_rooms(request: Request, session=Depends(require_client)):
         rows = db.execute(
             "SELECT * FROM rooms WHERE client_id=%s ORDER BY room_number", (cid,), fetch="all"
         )
-        return {"success": True, "data": [dict(r) for r in (rows or [])]}
+        out = []
+        for r in (rows or []):
+            room = dict(r)
+            deco = _room_status.decorate(room.get("status"))
+            room["status"] = deco["status"]
+            room["status_label"] = deco["label"]
+            room["status_color"] = deco["color"]
+            room["status_hex"] = deco["hex"]
+            out.append(room)
+        return {"success": True, "data": out, "legend": _room_status.legend()}
     except Exception as e:
         return {"success": True, "data": [], "warning": str(e)}
 
 
-ROOM_STATUSES = ("available", "occupied", "dirty", "maintenance", "blocked")
+# الحالات المعتمدة من مصدرٍ واحد (`services/room_status`)، والقديمة تُطبَّع
+# فلا يُرفض صفٌّ سابق. لا تُكرّر القائمة هنا كي لا تتباعد عن الأسطورة.
+ROOM_STATUSES = tuple(_room_status.STATUSES.keys())
 
 
 def _clean_room_payload(data: dict) -> dict:
@@ -590,9 +611,10 @@ def _clean_room_payload(data: dict) -> dict:
     except (TypeError, ValueError):
         raise ValueError("الطابق يجب أن يكون رقماً") from None
 
-    status = str(data.get("status") or "available").strip()
-    if status not in ROOM_STATUSES:
+    raw_status = str(data.get("status") or "available").strip()
+    if not _room_status.is_valid(raw_status):
         raise ValueError(f"حالة غير معروفة. المسموح: {'، '.join(ROOM_STATUSES)}")
+    status = _room_status.normalize(raw_status)
 
     return {
         "room_number": number,

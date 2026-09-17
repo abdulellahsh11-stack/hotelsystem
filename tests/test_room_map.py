@@ -229,9 +229,20 @@ def test_the_map_tells_the_client_whether_it_may_edit(client):
 # ── تغيير الحالة من الخريطة ────────────────────────────────────
 def test_a_writer_can_change_a_room_status(client):
     c, db = client
+    # حالةٌ معتمدة تُخزَّن كما هي
+    r = c.patch("/api/rooms/1/status", json={"status": "cleaning"}, cookies=OWNER)
+    assert r.status_code == 200
+    assert next(x for x in db.rooms if x["id"] == 1)["status"] == "cleaning"
+
+
+def test_legacy_status_is_normalized_not_stored_verbatim(client):
+    """المسمّى القديم `dirty` يُقبَل لكن يُخزَّن «cleaning» المعتمد —
+    مفردةٌ واحدة لا مسمّيان لنفس الحالة."""
+    c, db = client
     r = c.patch("/api/rooms/1/status", json={"status": "dirty"}, cookies=OWNER)
     assert r.status_code == 200
-    assert next(x for x in db.rooms if x["id"] == 1)["status"] == "dirty"
+    assert r.json()["data"]["status"] == "cleaning"
+    assert next(x for x in db.rooms if x["id"] == 1)["status"] == "cleaning"
 
 
 @pytest.mark.parametrize("token", ["recep", "hk", "acct"])

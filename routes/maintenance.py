@@ -61,6 +61,12 @@ async def create_order(request: Request, session=Depends(_require_client)):
                   data.get("assigned_to"), float(data.get("estimated_cost", 0) or 0),
                   loc_type, loc_label),
                   fetch="one")
+            # الغرفة تصير «صيانة» (أحمر) ما دام عليها عطلٌ مفتوح — تبقى
+            # حمراء حتى يُغلقها موظف الصيانة، فتعود «نظافة». معزولةٌ بالمنشأة.
+            if data.get("room_id"):
+                db.execute(
+                    "UPDATE rooms SET status='maintenance' WHERE id=%s AND client_id=%s",
+                    (data.get("room_id"), cid))
             return {"success": True, "data": dict(row)}
         return {"success": True, "data": data}
     except HTTPException:
@@ -140,11 +146,12 @@ async def complete_order(order_id: int, request: Request, session=Depends(_requi
         if not db.use_postgres:
             return {"success": True, "data": {"used": []}}
         order = db.execute(
-            "SELECT order_number FROM maintenance_orders WHERE id=%s AND client_id=%s",
+            "SELECT order_number, room_id FROM maintenance_orders WHERE id=%s AND client_id=%s",
             (order_id, cid), fetch="one")
         if not order:
             raise HTTPException(status_code=404, detail="أمر الصيانة غير موجود")
-        ref = dict(order).get("order_number") or order_id
+        order = dict(order)
+        ref = order.get("order_number") or order_id
         used = maintenance_stock.consume(db, cid, data.get("materials"),
                                          order_ref=ref, actor=actor)
         report = maintenance_report.clean_report(data.get("report"))
@@ -153,8 +160,17 @@ async def complete_order(order_id: int, request: Request, session=Depends(_requi
                  SET status='completed', report=%s, actual_cost=%s, completed_at=NOW()
                WHERE id=%s AND client_id=%s""",
             (report, float(data.get("actual_cost", 0) or 0), order_id, cid))
+        # أُغلق العطل: الغرفة الحمراء تعود «نظافة» (أزرق) لا «جاهزة» رأساً —
+        # بعد الصيانة تُنظَّف ثم يُصدّرها طاقم التنظيف خضراء. نُطبّقه على
+        # غرفةٍ ما زالت «صيانة» فقط، فلا نُبطل حجزاً أُسكِنت له بعد فتح العطل.
+        room_id = order.get("room_id")
+        if room_id:
+            db.execute(
+                "UPDATE rooms SET status='cleaning' "
+                "WHERE id=%s AND client_id=%s AND status='maintenance'",
+                (room_id, cid))
         return {"success": True, "data": {"id": order_id, "status": "completed",
-                "report": report, "used": used}}
+                "report": report, "used": used, "room_id": room_id}}
     except HTTPException:
         raise
     except Exception as e:
