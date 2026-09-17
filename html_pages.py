@@ -71,28 +71,30 @@ def _login_page(error: str = "", ref_code: str = "") -> str:
 {_SEO_BASE}
 <style>
   *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:linear-gradient(135deg,#0F2640 0%,#185FA5 100%);min-height:100vh;display:flex;align-items:center;justify-content:center}}
-  .card{{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}}
-  .logo{{text-align:center;margin-bottom:32px}}
-  .logo h1{{color:#0F2640;font-size:2rem;font-weight:700}}
+  body{{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#1B4D3D,#0E2A22);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}}
+  .card{{background:#fff;border-radius:18px;padding:44px 40px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,0.35)}}
+  .logo{{text-align:center;margin-bottom:30px}}
+  .logo h1{{color:#1B4D3D;font-size:2rem;font-weight:700}}
   .logo p{{color:#64748b;font-size:0.9rem;margin-top:4px}}
   .tabs{{display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:28px}}
   .tab{{flex:1;padding:10px;text-align:center;cursor:pointer;color:#64748b;font-weight:500;transition:.2s}}
-  .tab.active{{color:#185FA5;border-bottom:2px solid #185FA5;margin-bottom:-2px}}
+  .tab.active{{color:#1B4D3D;border-bottom:2px solid #1B4D3D;margin-bottom:-2px}}
   .form-group{{margin-bottom:20px}}
   label{{display:block;color:#374151;font-size:.875rem;font-weight:500;margin-bottom:6px}}
   input,select{{width:100%;padding:11px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.95rem;transition:.2s;font-family:inherit;color:#1e293b}}
-  input:focus,select:focus{{outline:none;border-color:#185FA5;box-shadow:0 0 0 3px rgba(24,95,165,0.1)}}
-  .btn{{width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}}
-  .btn:hover{{background:#0F2640}}
+  input:focus,select:focus{{outline:none;border-color:#1B4D3D;box-shadow:0 0 0 3px rgba(27,77,61,0.1)}}
+  .btn{{width:100%;padding:13px;background:linear-gradient(135deg,#1B4D3D,#0E2A22);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}}
+  .btn:hover{{filter:brightness(1.08)}}
   .alert-error{{background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:.875rem;margin-bottom:16px}}
   .pane{{display:none}} .pane.active{{display:block}}
   .footer{{text-align:center;margin-top:12px;color:#9ca3af;font-size:.8rem}}
   .contact-box{{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}}
-  .contact-box a{{color:#185FA5;text-decoration:none;font-size:.88rem;font-weight:500}}
+  .contact-box a{{color:#1B4D3D;text-decoration:none;font-size:.88rem;font-weight:500}}
   .contact-box a:hover{{text-decoration:underline}}
   .switch-link{{text-align:center;margin-top:16px;font-size:.85rem;color:#64748b}}
-  .switch-link a{{color:#185FA5;text-decoration:none}}
+  .switch-link a{{color:#1B4D3D;text-decoration:none}}
+  .staff-link{{text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid #eee;font-size:12.5px;color:#888}}
+  .staff-link a{{color:#1B4D3D;font-weight:600;text-decoration:none}}
 </style>
 </head>
 <body>
@@ -162,6 +164,7 @@ def _login_page(error: str = "", ref_code: str = "") -> str:
     <a href="mailto:info@dheuof.com">&#9993; info@dheuof.com</a>
     <a href="https://wa.me/966565009696" target="_blank" rel="noopener">&#128241; واتساب: +966 56 500 9696</a>
   </div>
+  <p class="staff-link">موظف في منشأة مشتركة؟ <a href="/static/dheuof/staff-login.html">دخول الموظفين ←</a></p>
   <div class="footer">dheuof.com &copy; 2026 — منصة ضيوف للضيافة الذكية</div>
 </div>
 <script>
@@ -203,7 +206,7 @@ async function doRegister(){{
   }}else showErr(d.error||'خطأ في التسجيل');
 }}
 </script>
-<p style="text-align:center;margin-top:22px;padding-top:18px;border-top:1px solid #eee;font-size:12.5px;color:#888">موظف في منشأة مشتركة؟ <a href="/static/dheuof/staff-login.html" style="color:#1B4D3D;font-weight:600;text-decoration:none">دخول الموظفين ←</a></p></body>
+</body>
 </html>"""
 
 
