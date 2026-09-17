@@ -222,6 +222,61 @@ async def admin_toggle_client(client_id: str, request: Request, _=Depends(requir
     return {"success": True}
 
 
+# ── مفاتيح API لكل منشأة — يخصّصها مالك المنصّة ──────────────────
+# رقم المنشأة (client_id) مسجَّلٌ في قاعدة البيانات عند إنشائها، وكل
+# مفتاحٍ يُصدَر هنا مرتبطٌ به في جدول api_keys (تجزئة SHA-256 لا الخام).
+# مالك المنصّة وحده يُصدر أو يُبطل — عبر require_admin.
+def _keymgr(request: Request):
+    mgr = getattr(request.app.state, "api_keys", None)
+    if mgr is None:
+        raise HTTPException(status_code=503,
+                            detail="مدير المفاتيح غير مهيّأ (تحتاج PostgreSQL)")
+    return mgr
+
+
+def _client_or_404(request: Request, client_id: str) -> dict:
+    client = request.app.state.store.get_client(client_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="المنشأة غير موجودة")
+    return client
+
+
+@router.get("/api/admin/clients/{client_id}/api-keys")
+async def admin_list_api_keys(client_id: str, request: Request, _=Depends(require_admin)):
+    """مفاتيح API الخاصة بمنشأةٍ بعينها (بالقناع لا الخام)."""
+    _client_or_404(request, client_id)
+    mgr = _keymgr(request)
+    return {"success": True, "keys": mgr.list_keys(client_id),
+            "scopes": mgr.available_scopes()}
+
+
+@router.post("/api/admin/clients/{client_id}/api-keys")
+async def admin_issue_api_key(client_id: str, request: Request, _=Depends(require_admin)):
+    """يُصدر مفتاحاً جديداً للمنشأة ويُعيد الخام مرّةً واحدة فقط."""
+    _client_or_404(request, client_id)
+    mgr = _keymgr(request)
+    body = await request.json()
+    name = str(body.get("name") or "").strip()[:120]
+    scopes = body.get("scopes") or None
+    if scopes is not None:
+        allowed = set(mgr.available_scopes())
+        scopes = [s for s in scopes if s in allowed]
+    issued = mgr.issue_key(client_id, name=name, scopes=scopes)
+    return {"success": True, "issued": issued}
+
+
+@router.post("/api/admin/clients/{client_id}/api-keys/{key_id}/revoke")
+async def admin_revoke_api_key(client_id: str, key_id: int, request: Request,
+                               _=Depends(require_admin)):
+    """يُبطل مفتاحاً للمنشأة (لا يُحذف — يبقى للتدقيق، غير فعّال)."""
+    _client_or_404(request, client_id)
+    mgr = _keymgr(request)
+    ok = mgr.revoke_key(client_id, key_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="المفتاح غير موجود لهذه المنشأة")
+    return {"success": True}
+
+
 @router.get("/api/admin/keys")
 async def admin_get_keys(request: Request, _=Depends(require_admin)):
     store = request.app.state.store

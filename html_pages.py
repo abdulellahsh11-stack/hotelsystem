@@ -619,6 +619,16 @@ tr:hover td{background:#fafbfc}
       </div>
       <div id="mgr-msg" style="font-size:.8rem;margin-top:6px;display:none"></div>
     </div>
+    <!-- API keys section -->
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:.8rem;font-weight:700;color:#0F2640">&#128273; مفاتيح API لهذه المنشأة</div>
+        <button class="btn btn-p" style="padding:6px 12px;font-size:.78rem" onclick="issueApiKey()">&#10133; توليد مفتاح</button>
+      </div>
+      <div style="font-size:.72rem;color:#64748b;margin-bottom:8px">المفتاح مرتبطٌ برقم المنشأة، ويظهر خاماً مرّةً واحدة فقط عند التوليد.</div>
+      <div id="apikey-new" style="display:none;background:#052e16;color:#bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-family:monospace;font-size:.8rem;word-break:break-all"></div>
+      <div id="apikey-list" style="font-size:.78rem;color:#64748b">جاري التحميل...</div>
+    </div>
     <!-- Employees section -->
     <div style="font-size:.8rem;font-weight:700;color:#0F2640;margin-bottom:10px">&#128188; الموظفون في هذه المنشأة</div>
     <div style="overflow-x:auto;max-height:280px;overflow-y:auto">
@@ -1075,6 +1085,47 @@ async function openClientDetail(cid){
     <td>${e.last_active?(e.last_active.replace('T',' ').substring(0,19)):'لم يسجل نشاط'}</td>
     <td>${e.task_count||0}</td>
   </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8">لا يوجد موظفون مسجلون</td></tr>';
+  document.getElementById('apikey-new').style.display='none';
+  loadApiKeys();
+}
+
+// ─── مفاتيح API لكل منشأة ────────────────────────────────────
+async function loadApiKeys(){
+  const cid=document.getElementById('detail-cid').value;
+  const box=document.getElementById('apikey-list');
+  box.textContent='جاري التحميل...';
+  const r=await fetch('/api/admin/clients/'+cid+'/api-keys').then(r=>r.json()).catch(()=>({}));
+  if(!r.success){box.textContent=r.detail||'تعذّر تحميل المفاتيح';return;}
+  const keys=r.keys||[];
+  if(!keys.length){box.textContent='لا توجد مفاتيح — ولّد أول مفتاح لهذه المنشأة.';return;}
+  box.innerHTML=keys.map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:6px">
+    <div><code style="font-size:.75rem">${k.key_hint||'••••'}</code>
+      <span style="font-size:.68rem;color:${k.active?'#059669':'#dc2626'};margin-right:6px">${k.active?'● فعّال':'○ مُبطَل'}</span>
+      <div style="font-size:.66rem;color:#94a3b8">${(k.scopes||[]).join(' · ')||'—'}</div></div>
+    ${k.active?`<button class="btn btn-d" style="padding:4px 10px;font-size:.72rem" onclick="revokeApiKey(${k.id})">إبطال</button>`:''}
+  </div>`).join('');
+}
+
+async function issueApiKey(){
+  const cid=document.getElementById('detail-cid').value;
+  const name=prompt('اسمٌ للمفتاح (اختياري) — مثل: تكامل المحاسبة');
+  if(name===null)return;
+  const r=await fetch('/api/admin/clients/'+cid+'/api-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name||''})});
+  const d=await r.json();
+  if(!d.success){alert(d.detail||'تعذّر توليد المفتاح');return;}
+  const box=document.getElementById('apikey-new');
+  box.textContent='المفتاح (انسخه الآن — لن يظهر مجدداً): '+d.issued.api_key;
+  box.style.display='block';
+  loadApiKeys();
+}
+
+async function revokeApiKey(keyId){
+  if(!confirm('إبطال هذا المفتاح؟ ستتوقف البرامج المرتبطة به فوراً.'))return;
+  const cid=document.getElementById('detail-cid').value;
+  const r=await fetch('/api/admin/clients/'+cid+'/api-keys/'+keyId+'/revoke',{method:'POST'});
+  const d=await r.json();
+  if(!d.success){alert(d.detail||'تعذّر الإبطال');return;}
+  loadApiKeys();
 }
 
 async function resetManagerPass(){
