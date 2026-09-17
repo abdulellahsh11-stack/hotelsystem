@@ -34,7 +34,7 @@ routes/*.py       ٢٩ وحدة، كلٌّ يُصدّر router
 db/connection.py  مجمَّع الاتصالات + ربط سياق المستأجر
 db/store.py       طبقة البيانات (PostgreSQL + مخزن JSON للتطوير)
 db/rls.py         سياسات العزل في قاعدة البيانات
-db/access.py      المسارات الخمسة — حارسٌ لكلٍّ باسمه
+db/access.py      مسارات PMS الأربعة — حارسٌ لكلٍّ باسمه (الزائر ليس منها)
 routes/visitors.py  بوابة الزوّار — حجزٌ لأنفسهم لا غير
 routes/listings.py  تطبيق الحجوزات — مسار المنشأة: تُخصّص ما تعرضه
 routes/search.py    تطبيق الحجوزات — مسار الزائر: يبحث ويتصفّح
@@ -215,7 +215,7 @@ static/dheuof/modules/  ١٧ وحدة التشغيل اليومي
 `_guard_target` في `routes/staff_accounts.py`. يحرسهما
 `tests/test_role_hierarchy.py`.
 
-### المسارات الخمسة
+### مسارات PMS الأربعة — والزائر خارجها
 
 | # | من | الباب | يحجز للضيوف؟ |
 |---|---|---|---|
@@ -223,16 +223,18 @@ static/dheuof/modules/  ١٧ وحدة التشغيل اليومي
 | ٢ | مالك المنشأة | `/login` — رقم المنشأة + كلمة المرور | ✅ ويعيّن المدير |
 | ٣ | مدير المنشأة | `/static/dheuof/staff-login.html` | ✅ ويعيّن الموظفين |
 | ٤ | الموظفون | نفس الباب — اسم مستخدم + كلمة مرور | ✅ بحدّ وظيفته |
-| ٥ | **الزوّار** | `/api/visit/*` — جوال + كلمة مرور | ❌ **لنفسه فقط** |
 
 حارسٌ لكل مسارٍ باسمه في `db/access.py`: `require_platform_owner` ·
-`require_facility_owner` · `require_manager` · `require_staff` ·
-`require_visitor`. حارسٌ واحدٌ للجميع — كما كان `require_client` —
-يُخفي من يحقّ له من قارئ المسار.
+`require_facility_owner` · `require_manager` · `require_staff`. حارسٌ
+واحدٌ للجميع — كما كان `require_client` — يُخفي من يحقّ له من قارئ المسار.
 
-**الزائر منفصلٌ مادّياً**: كوكي `visitor_token` وجدول `visitor_sessions`
-وجدول `visitors` بلا رقم هوية. المشاركة تعني أن خطأً واحداً في التحقق
-يمنح زائراً صلاحيات موظف. يحرسه `tests/test_five_paths.py`.
+**الزائر ليس مساراً من مسارات PMS، بل جهة تطبيق الحجز وحدها**:
+`/api/visit/*` — جوال + كلمة مرور، يحجز لنفسه فقط ولا يدخل أي تطبيق
+تشغيل. حارسُه `require_visitor` يعيش في `services/visitor_session.py`
+مع جلسته لا في `db/access.py`. وهو **منفصلٌ مادّياً**: كوكي
+`visitor_token` وجدول `visitor_sessions` وجدول `visitors` بلا رقم هوية.
+المشاركة تعني أن خطأً واحداً في التحقق يمنح زائراً صلاحيات موظف.
+يحرسه `tests/test_five_paths.py`.
 
 ---
 

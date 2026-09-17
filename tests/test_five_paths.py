@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-tests/test_five_paths.py — المسارات الخمسة لا تتداخل
+tests/test_five_paths.py — مسارات PMS الأربعة لا تتداخل، والزائر خارجها
 
     ١ مالك المنصة   كل شيء عبر كل المنشآت
     ٢ مالك المنشأة  منشأته كاملةً · يعيّن المدير
     ٣ مدير المنشأة  يعيّن الموظفين لا نظراءه
     ٤ الموظفون      كلٌّ بحدّ وظيفته
-    ٥ الزوّار        حجزٌ لأنفسهم · لا يدخلون تطبيقاً
+    — الزائر        جهة تطبيق الحجز وحدها · حجزٌ لأنفسهم · لا يدخل تطبيقاً
 
-الأخطر هنا هو الخامس: بوابةٌ عامّة على الإنترنت، وأي ثغرةٍ فيها
-تُفتح على منشآت كل العملاء. لذلك أكثر الاختبارات هنا تبدأ بمحاولةٍ
-**يجب أن تُرفض**، لا بمحاولةٍ تنجح.
+الزائر ليس مساراً من مسارات PMS: حارسُه يعيش في طبقة الحجز
+(`services/visitor_session.py`) لا بين حرّاس المنشأة في `db/access.py`.
+وهو الأخطر: بوابةٌ عامّة على الإنترنت، وأي ثغرةٍ فيها تُفتح على منشآت
+كل العملاء. لذلك أكثر الاختبارات هنا تبدأ بمحاولةٍ **يجب أن تُرفض**،
+لا بمحاولةٍ تنجح.
 """
 import ast
 from pathlib import Path
@@ -29,6 +31,7 @@ from db.access import (
 ROOT = Path(__file__).resolve().parent.parent
 VISITORS = ROOT / "routes/visitors.py"
 ACCESS = ROOT / "db/access.py"
+VISITOR_SESSION = ROOT / "services/visitor_session.py"
 
 
 # ── المراتب ─────────────────────────────────────────────────────
@@ -68,14 +71,28 @@ def test_visitor_session_carries_no_role():
 # ── حرّاس منفصلون بأسماءٍ صريحة ─────────────────────────────────
 @pytest.mark.parametrize("guard", [
     "require_platform_owner", "require_facility_owner",
-    "require_manager", "require_staff", "require_visitor",
+    "require_manager", "require_staff",
 ])
-def test_each_path_has_its_own_guard(guard):
+def test_each_pms_path_has_its_own_guard(guard):
     """
-    خمسة حرّاس بأسماءٍ تُقرأ. حارسٌ واحد لكل المراتب — كما كان
+    أربعة حرّاس PMS بأسماءٍ تُقرأ. حارسٌ واحد لكل المراتب — كما كان
     `require_client` — يُخفي من يحقّ له من قارئ المسار.
     """
     assert "def %s(" % guard in ACCESS.read_text(encoding="utf-8")
+
+
+def test_visitor_guard_lives_in_the_booking_layer_not_among_pms_guards():
+    """
+    الزائر جهة تطبيق الحجز، لا مساراً من مسارات PMS. لذلك حارسُه في
+    طبقة الحجز لا بين حرّاس المنشأة: إبقاؤه في `db/access.py` يوحي
+    بأنه مرتبةٌ داخلية، وهذا اللبس هو ما يُطلب إزالته.
+    """
+    access_src = ACCESS.read_text(encoding="utf-8")
+    session_src = VISITOR_SESSION.read_text(encoding="utf-8")
+    assert "def require_visitor(" not in access_src, \
+        "حارس الزائر ما زال بين حرّاس PMS في db/access.py"
+    assert "def require_visitor(" in session_src, \
+        "حارس الزائر مفقودٌ من طبقة الحجز services/visitor_session.py"
 
 
 # ── بوابة الزوّار ───────────────────────────────────────────────
