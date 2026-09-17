@@ -380,6 +380,19 @@ function buildFloorsFromRooms(rooms){
     });
 }
 
+// أسطورة الخريطة من الخادم: الحالات الخمس بألوانها نفسها التي تُلوَّن بها
+// البطاقات — مصدرٌ واحد فلا تُظهر الأسطورة لوناً لا تراه على الغرف.
+function renderLegend(legend){
+  var el = document.querySelector('.room-legend'); if(!el) return;
+  var items = legend || [
+    {label:'جاهزة',hex:'#16a34a'},{label:'مشغولة',hex:'#b45309'},
+    {label:'نظافة',hex:'#2563eb'},{label:'صيانة',hex:'#dc2626'},{label:'ترميم',hex:'#6b7280'}
+  ];
+  el.innerHTML = items.map(function(s){
+    return '<div class="item"><div class="dot" style="background:'+(s.hex||'#6b7280')+'"></div> '+(s.label||s.status||'')+'</div>';
+  }).join('');
+}
+
 function loadRoomMap(){
   var c = document.getElementById('floors-container');
   if(c && !FLOORS.length){
@@ -389,6 +402,7 @@ function loadRoomMap(){
     .then(function(r){ return r.json(); })
     .then(function(res){
       var rooms = (res && res.data) || [];
+      renderLegend((res && res.legend) || null);   // الأسطورة من الخادم لا HTML ثابت
       FLOORS = buildFloorsFromRooms(rooms);
       // كل دور مفتوح افتراضياً — الخريطة تُقرأ دفعةً واحدة عادةً
       floorOpen = FLOORS.map(function(){ return true; });
@@ -445,15 +459,15 @@ function renderFloors(){
         var hint = rm.guest
           ? '<div class="guest-hint">'+rm.guest+'</div>'
           : (rm.checkin?'<div class="guest-hint">وصول '+rm.checkin+'</div>':'');
-        // اللون من الخادم مباشرةً: حدٌّ ملوّن وخلفيةٌ خفيفة، فتظهر الحالات
-        // الخمس بألوانها (أخضر/ذهبي/أزرق/أحمر/رمادي) بلا اعتمادٍ على أصناف CSS.
+        // اللون من الخادم يملأ البطاقة كلها لا رقمها وحده: خلفيةٌ ملوّنة
+        // وحدٌّ كامل وشارةُ حالةٍ صريحة، فتُقرأ الحالة من لونها عن بُعد.
         var hex = rm.statusHex || statusHex(rm.status);
         var lbl = rm.statusLabel || statusLabel(rm.status);
         return '<div class="room-card '+rm.status+'" onclick="showRoomDetail('+fi+','+ri+')" title="غرفة '+rm.num+'"'
-          +' style="border-right:4px solid '+hex+';box-shadow:inset 0 0 0 1px '+hex+'22">'
-          +'<div class="rnum">'+rm.num+'</div>'
+          +' style="background:'+hex+'1a;border:2px solid '+hex+'">'
+          +'<div class="rnum" style="color:'+hex+'">'+rm.num+'</div>'
           +'<div class="rtype">'+rm.type+'</div>'
-          +'<div class="rstatus" style="color:'+hex+';font-weight:600">'+lbl+'</div>'
+          +'<div class="rstatus" style="background:'+hex+';color:#fff;font-weight:700;padding:2px 10px;border-radius:999px;display:inline-block">'+lbl+'</div>'
           +hint
           +'</div>';
       }).join('')
