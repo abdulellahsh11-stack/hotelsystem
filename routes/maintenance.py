@@ -63,10 +63,34 @@ async def create_order(request: Request, session=Depends(_require_client)):
                   fetch="one")
             # الغرفة تصير «صيانة» (أحمر) ما دام عليها عطلٌ مفتوح — تبقى
             # حمراء حتى يُغلقها موظف الصيانة، فتعود «نظافة». معزولةٌ بالمنشأة.
-            if data.get("room_id"):
-                db.execute(
-                    "UPDATE rooms SET status='maintenance' WHERE id=%s AND client_id=%s",
-                    (data.get("room_id"), cid))
+            # لا نلمس غرفةً «مشغولة»: نزيلُها بداخلها، وإغلاق العطل يعيدها
+            # «نظافة» لا «مشغولة»، فيضيع إشغالُها. العطل يبقى مسجَّلاً بالأمر،
+            # وتُحوَّل الغرفة يدوياً عند خروج النزيل.
+            room_id = data.get("room_id")
+            if room_id:
+                prev = db.execute(
+                    "SELECT status FROM rooms WHERE id=%s AND client_id=%s",
+                    (room_id, cid), fetch="one")
+                prev_status = dict(prev).get("status") if prev else None
+                if prev_status and prev_status != "occupied":
+                    db.execute(
+                        "UPDATE rooms SET status='maintenance' "
+                        "WHERE id=%s AND client_id=%s AND status <> 'occupied'",
+                        (room_id, cid))
+                    # سجلّ المساءلة: من فتح العطل ومن أيّ حالةٍ إلى «صيانة».
+                    try:
+                        from db.access import actor_label
+                        db.execute(
+                            """INSERT INTO room_actions
+                                   (client_id, room_number, action_type, performed_by,
+                                    previous_status, new_status, notes)
+                               SELECT %s, room_number, 'maintenance_open', %s, %s,
+                                      'maintenance', %s
+                                 FROM rooms WHERE id=%s AND client_id=%s""",
+                            (cid, actor_label(session), prev_status,
+                             f"فتح أمر صيانة {num}", room_id, cid))
+                    except Exception:
+                        logger.warning("تعذّر تسجيل فتح صيانة الغرفة %s", room_id)
             return {"success": True, "data": dict(row)}
         return {"success": True, "data": data}
     except HTTPException:

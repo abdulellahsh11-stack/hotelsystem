@@ -46,12 +46,15 @@ def test_colours_match_the_spec():
 
 
 # ── انتقالات الصيانة في المسار ──────────────────────────────────
-def test_opening_a_maintenance_order_reddens_the_room():
+def test_opening_a_maintenance_order_reddens_the_room_but_not_an_occupied_one():
     src = MAINT.read_text(encoding="utf-8")
-    # عند إنشاء أمر صيانة لغرفة، تُضبط حالتها «maintenance» معزولةً بالمنشأة
+    # تُضبط «maintenance» معزولةً بالمنشأة، لكن لا تُلمَس غرفةٌ «مشغولة»
+    # (نزيلٌ بداخلها) فلا يضيع إشغالُها عند إغلاق العطل.
     assert re.search(
-        r"UPDATE rooms SET status='maintenance'\s+WHERE id=%s AND client_id=%s", src
-    ), "فتح العطل لا يُحمّر الغرفة"
+        r"UPDATE rooms SET status='maintenance' \"?\s*\n?\s*\"?\s*"
+        r"WHERE id=%s AND client_id=%s AND status <> 'occupied'", src
+    ), "فتح العطل يجب أن يُحمّر الغرفة إلا المشغولة"
+    assert 'prev_status != "occupied"' in src, "لا حارس للغرفة المشغولة قبل التحويل"
 
 
 def test_closing_a_maintenance_order_turns_the_room_blue_not_green():
