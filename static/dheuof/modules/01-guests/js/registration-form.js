@@ -130,6 +130,13 @@ setTimeout(function(){
     ci.addEventListener('change',function(){ if(n.value) calcCO(); else if(co.value) calcN(); });
     n.addEventListener('input', calcCO);
     co.addEventListener('change', calcN);
+
+    // افتراضٌ حيّ: الوصول يبدأ بتاريخ اليوم، والمغادرة تُحسب من الليالي —
+    // بدل تاريخٍ ثابت قديم (كان ٢٠٢٥). ولا حدّ أدنى (`min`) على أيّهما:
+    // الحقلان قابلان للتعديل بحرّية لأي يوم، حتى يومٍ سابق — فمن وصل
+    // بعد منتصف الليل (١٢:٠٥ص) وخرج ٣م يُسجَّل وصولُه أمسِ فتُحسب ليلةً.
+    if(!ci.value){ ci.value = new Date().toISOString().split('T')[0]; }
+    if(!co.value){ if(n.value) calcCO(); else calcN(); }
   }
 
   /* ─── 5. CHECK-IN/OUT TIME POLICY ────────────────────────────── */
