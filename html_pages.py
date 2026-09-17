@@ -71,28 +71,30 @@ def _login_page(error: str = "", ref_code: str = "") -> str:
 {_SEO_BASE}
 <style>
   *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:linear-gradient(135deg,#0F2640 0%,#185FA5 100%);min-height:100vh;display:flex;align-items:center;justify-content:center}}
-  .card{{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}}
-  .logo{{text-align:center;margin-bottom:32px}}
-  .logo h1{{color:#0F2640;font-size:2rem;font-weight:700}}
+  body{{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#1B4D3D,#0E2A22);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}}
+  .card{{background:#fff;border-radius:18px;padding:44px 40px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,0.35)}}
+  .logo{{text-align:center;margin-bottom:30px}}
+  .logo h1{{color:#1B4D3D;font-size:2rem;font-weight:700}}
   .logo p{{color:#64748b;font-size:0.9rem;margin-top:4px}}
   .tabs{{display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:28px}}
   .tab{{flex:1;padding:10px;text-align:center;cursor:pointer;color:#64748b;font-weight:500;transition:.2s}}
-  .tab.active{{color:#185FA5;border-bottom:2px solid #185FA5;margin-bottom:-2px}}
+  .tab.active{{color:#1B4D3D;border-bottom:2px solid #1B4D3D;margin-bottom:-2px}}
   .form-group{{margin-bottom:20px}}
   label{{display:block;color:#374151;font-size:.875rem;font-weight:500;margin-bottom:6px}}
   input,select{{width:100%;padding:11px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.95rem;transition:.2s;font-family:inherit;color:#1e293b}}
-  input:focus,select:focus{{outline:none;border-color:#185FA5;box-shadow:0 0 0 3px rgba(24,95,165,0.1)}}
-  .btn{{width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}}
-  .btn:hover{{background:#0F2640}}
+  input:focus,select:focus{{outline:none;border-color:#1B4D3D;box-shadow:0 0 0 3px rgba(27,77,61,0.1)}}
+  .btn{{width:100%;padding:13px;background:linear-gradient(135deg,#1B4D3D,#0E2A22);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}}
+  .btn:hover{{filter:brightness(1.08)}}
   .alert-error{{background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:.875rem;margin-bottom:16px}}
   .pane{{display:none}} .pane.active{{display:block}}
   .footer{{text-align:center;margin-top:12px;color:#9ca3af;font-size:.8rem}}
   .contact-box{{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}}
-  .contact-box a{{color:#185FA5;text-decoration:none;font-size:.88rem;font-weight:500}}
+  .contact-box a{{color:#1B4D3D;text-decoration:none;font-size:.88rem;font-weight:500}}
   .contact-box a:hover{{text-decoration:underline}}
   .switch-link{{text-align:center;margin-top:16px;font-size:.85rem;color:#64748b}}
-  .switch-link a{{color:#185FA5;text-decoration:none}}
+  .switch-link a{{color:#1B4D3D;text-decoration:none}}
+  .staff-link{{text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid #eee;font-size:12.5px;color:#888}}
+  .staff-link a{{color:#1B4D3D;font-weight:600;text-decoration:none}}
 </style>
 </head>
 <body>
@@ -162,6 +164,7 @@ def _login_page(error: str = "", ref_code: str = "") -> str:
     <a href="mailto:info@dheuof.com">&#9993; info@dheuof.com</a>
     <a href="https://wa.me/966565009696" target="_blank" rel="noopener">&#128241; واتساب: +966 56 500 9696</a>
   </div>
+  <p class="staff-link">موظف في منشأة مشتركة؟ <a href="/static/dheuof/staff-login.html">دخول الموظفين ←</a></p>
   <div class="footer">dheuof.com &copy; 2026 — منصة ضيوف للضيافة الذكية</div>
 </div>
 <script>
@@ -203,7 +206,7 @@ async function doRegister(){{
   }}else showErr(d.error||'خطأ في التسجيل');
 }}
 </script>
-<p style="text-align:center;margin-top:22px;padding-top:18px;border-top:1px solid #eee;font-size:12.5px;color:#888">موظف في منشأة مشتركة؟ <a href="/static/dheuof/staff-login.html" style="color:#1B4D3D;font-weight:600;text-decoration:none">دخول الموظفين ←</a></p></body>
+</body>
 </html>"""
 
 
@@ -615,6 +618,16 @@ tr:hover td{background:#fafbfc}
         </div>
       </div>
       <div id="mgr-msg" style="font-size:.8rem;margin-top:6px;display:none"></div>
+    </div>
+    <!-- API keys section -->
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:.8rem;font-weight:700;color:#0F2640">&#128273; مفاتيح API لهذه المنشأة</div>
+        <button class="btn btn-p" style="padding:6px 12px;font-size:.78rem" onclick="issueApiKey()">&#10133; توليد مفتاح</button>
+      </div>
+      <div style="font-size:.72rem;color:#64748b;margin-bottom:8px">المفتاح مرتبطٌ برقم المنشأة، ويظهر خاماً مرّةً واحدة فقط عند التوليد.</div>
+      <div id="apikey-new" style="display:none;background:#052e16;color:#bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-family:monospace;font-size:.8rem;word-break:break-all"></div>
+      <div id="apikey-list" style="font-size:.78rem;color:#64748b">جاري التحميل...</div>
     </div>
     <!-- Employees section -->
     <div style="font-size:.8rem;font-weight:700;color:#0F2640;margin-bottom:10px">&#128188; الموظفون في هذه المنشأة</div>
@@ -1072,6 +1085,47 @@ async function openClientDetail(cid){
     <td>${e.last_active?(e.last_active.replace('T',' ').substring(0,19)):'لم يسجل نشاط'}</td>
     <td>${e.task_count||0}</td>
   </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8">لا يوجد موظفون مسجلون</td></tr>';
+  document.getElementById('apikey-new').style.display='none';
+  loadApiKeys();
+}
+
+// ─── مفاتيح API لكل منشأة ────────────────────────────────────
+async function loadApiKeys(){
+  const cid=document.getElementById('detail-cid').value;
+  const box=document.getElementById('apikey-list');
+  box.textContent='جاري التحميل...';
+  const r=await fetch('/api/admin/clients/'+cid+'/api-keys').then(r=>r.json()).catch(()=>({}));
+  if(!r.success){box.textContent=r.detail||'تعذّر تحميل المفاتيح';return;}
+  const keys=r.keys||[];
+  if(!keys.length){box.textContent='لا توجد مفاتيح — ولّد أول مفتاح لهذه المنشأة.';return;}
+  box.innerHTML=keys.map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:6px">
+    <div><code style="font-size:.75rem">${k.key_hint||'••••'}</code>
+      <span style="font-size:.68rem;color:${k.active?'#059669':'#dc2626'};margin-right:6px">${k.active?'● فعّال':'○ مُبطَل'}</span>
+      <div style="font-size:.66rem;color:#94a3b8">${(k.scopes||[]).join(' · ')||'—'}</div></div>
+    ${k.active?`<button class="btn btn-d" style="padding:4px 10px;font-size:.72rem" onclick="revokeApiKey(${k.id})">إبطال</button>`:''}
+  </div>`).join('');
+}
+
+async function issueApiKey(){
+  const cid=document.getElementById('detail-cid').value;
+  const name=prompt('اسمٌ للمفتاح (اختياري) — مثل: تكامل المحاسبة');
+  if(name===null)return;
+  const r=await fetch('/api/admin/clients/'+cid+'/api-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name||''})});
+  const d=await r.json();
+  if(!d.success){alert(d.detail||'تعذّر توليد المفتاح');return;}
+  const box=document.getElementById('apikey-new');
+  box.textContent='المفتاح (انسخه الآن — لن يظهر مجدداً): '+d.issued.api_key;
+  box.style.display='block';
+  loadApiKeys();
+}
+
+async function revokeApiKey(keyId){
+  if(!confirm('إبطال هذا المفتاح؟ ستتوقف البرامج المرتبطة به فوراً.'))return;
+  const cid=document.getElementById('detail-cid').value;
+  const r=await fetch('/api/admin/clients/'+cid+'/api-keys/'+keyId+'/revoke',{method:'POST'});
+  const d=await r.json();
+  if(!d.success){alert(d.detail||'تعذّر الإبطال');return;}
+  loadApiKeys();
 }
 
 async function resetManagerPass(){
