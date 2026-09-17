@@ -3,7 +3,7 @@
 """
 routes/visitors.py — بوابة الزوّار: حجزٌ لأنفسهم لا غير
 
-المسار الخامس في الهرم. ما يستطيعه الزائر:
+تطبيق الحجز، لا مساراً من مسارات PMS الأربعة. ما يستطيعه الزائر:
 
     ✅ يُنشئ حساباً بجواله واسمه
     ✅ يرى أنواع الغرف وأسعارها في منشأةٍ واحدة
@@ -28,9 +28,9 @@ from datetime import date
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from db.access import require_visitor
 from db.connection import count_of
 from services import visitor_session
+from services.visitor_session import require_visitor
 
 router = APIRouter(prefix="/api/visit", tags=["Visitors"])
 log = logging.getLogger("dheuof.visitors")

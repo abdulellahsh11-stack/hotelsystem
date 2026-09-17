@@ -19,7 +19,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 
 log = logging.getLogger("dheuof.visitor")
 
@@ -123,6 +123,22 @@ def session_from_request(request: Request) -> dict | None:
         "phone": row.get("phone"),
         "email": row.get("email"),
     }
+
+
+# ── حارس بوابة الحجز ────────────────────────────────────────────
+def require_visitor(request: Request) -> dict:
+    """
+    حارس الزائر — يعيش هنا مع تطبيق الحجز، لا بين حرّاس المنشأة.
+
+    الزائر ليس مرتبةً من مراتب PMS ولا مساراً من مساراته الأربعة؛ هو
+    جهة تطبيق الحجز وحدها. لذلك حارسُه في طبقة الحجز مع جلسته المنفصلة
+    (كوكي `visitor_token` وجدول `visitor_sessions`)، لا في `db/access.py`
+    حيث خلطُه بحرّاس المنشأة يوحي بأنه مرتبةٌ داخلية.
+    """
+    session = session_from_request(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="سجّل دخولك لبوابة الحجز")
+    return session
 
 
 def revoke(request: Request, token: str | None) -> None:
