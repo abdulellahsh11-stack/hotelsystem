@@ -67,3 +67,33 @@ def test_checkout_sends_the_room_to_cleaning():
     """تسجيل الخروج → «cleaning» (أزرق) حتى يُصدّرها طاقم التنظيف."""
     src = HK.read_text(encoding="utf-8")
     assert "status        = 'cleaning'" in src or "status='cleaning'" in src
+
+
+# ── سجلّ المساءلة: من نفّذ الإجراء ───────────────────────────────
+def test_actor_label_prefers_name_then_username_then_role():
+    from db.access import actor_label
+
+    assert actor_label({"full_name": "أحمد", "username": "a", "role": "receptionist"}) == "أحمد"
+    assert actor_label({"username": "reception1", "role": "receptionist"}) == "reception1"
+    # بلا اسمٍ ولا مستخدم → تسمية الدور بالعربية لا فراغ
+    assert actor_label({"role": "receptionist"}) == "موظف استقبال"
+    assert actor_label({"role": "gm"}) == "مدير عام"
+
+
+def test_status_change_records_who_and_the_transition():
+    """تغيير لون/حالة الغرفة يُسجَّل باسم من غيّره ومن أيّ حالةٍ إلى أيّ."""
+    ROUTE = ROOT / "routes/hotel_ops.py"
+    src = ROUTE.read_text(encoding="utf-8")
+    assert "INSERT INTO room_actions" in src
+    assert "'status_change'" in src
+    assert "actor_label(session)" in src
+
+
+def test_guest_registration_stamps_created_by():
+    """تسجيل نزيلٍ جديد يحفظ اسم من سجّله (created_by)، عند الإنشاء فقط."""
+    ROUTE = (ROOT / "routes/hotel_ops.py").read_text(encoding="utf-8")
+    STORE = (ROOT / "db/store.py").read_text(encoding="utf-8")
+    MIG = (ROOT / "db/schema_migrations.py").read_text(encoding="utf-8")
+    assert 'data["created_by"] = actor_label(session)' in ROUTE
+    assert "created_by" in STORE and "INSERT INTO guests" in STORE
+    assert "ADD COLUMN IF NOT EXISTS created_by" in MIG

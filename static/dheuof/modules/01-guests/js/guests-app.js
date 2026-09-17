@@ -552,9 +552,10 @@ window.changeRoomStatus = function(fi,ri){
     room.statusLabel = statusLabel(newStatus);
     room.statusHex = statusHex(newStatus);
     if(newStatus==='available'||newStatus==='renovation') room.guest = null;
+    var by = r.b && r.b.data && r.b.data.by;   // من غيّر الحالة — للمساءلة
     var bd = document.querySelector('.dh-modal-bd'); if(bd) bd.remove();
     renderFloors(); updateBadges();
-    toast('غرفة '+num+' — '+statusLabel(newStatus)+' ✓');
+    toast('غرفة '+num+' — '+statusLabel(newStatus)+(by?' · بواسطة '+by:'')+' ✓');
   }).catch(function(){ toast('تعذّر الاتصال بالخادم', true); });
 };
 

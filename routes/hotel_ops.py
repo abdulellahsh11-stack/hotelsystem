@@ -156,6 +156,10 @@ async def save_guest(request: Request, session=Depends(require_client)):
         data.pop("id", None)
     data["client_id"] = session["client_id"]
     data.setdefault("created_at", datetime.now().isoformat())
+    # سجلّ المساءلة: من سجّل النزيل — يُكتب عند الإنشاء فقط (لا يُطمَس بتعديل).
+    if not str(data.get("id") or "").isdigit():
+        from db.access import actor_label
+        data["created_by"] = actor_label(session)
     guest = store.save_guest(session["client_id"], data)
     return {"success": True, "data": _present([guest], session)[0]}
 
@@ -543,12 +547,35 @@ async def set_room_status(room_id: int, request: Request,
                             detail=f"حالة غير معروفة. المسموح: {'، '.join(ROOM_STATUSES)}")
     status = _room_status.normalize(raw)
     db = request.app.state.db
+    cid = session["client_id"]
+    # نقرأ الحالة السابقة ورقم الغرفة قبل التغيير كي نسجّل من غيّر ماذا.
+    prev = db.execute(
+        "SELECT room_number, status FROM rooms WHERE id=%s AND client_id=%s",
+        (room_id, cid), fetch="one")
+    if not prev:
+        raise HTTPException(status_code=404, detail="الغرفة غير موجودة")
+    prev = dict(prev)
     affected = db.execute(
         "UPDATE rooms SET status=%s WHERE id=%s AND client_id=%s",
-        (status, room_id, session["client_id"]))
+        (status, room_id, cid))
     if not affected:
         raise HTTPException(status_code=404, detail="الغرفة غير موجودة")
-    return {"success": True, "data": {"id": room_id, "status": status}}
+    from db.access import actor_label
+    who = actor_label(session)
+    # سجلّ المساءلة: من غيّر لون/حالة الغرفة، ومن أيّ حالةٍ إلى أيّ. يُقرأ
+    # من `/api/hotel/rooms/{room_number}/history`. لا نُفشل التغيير لو تعذّر
+    # التسجيل — الجدول قد يغيب في التطوير بلا PostgreSQL.
+    try:
+        db.execute(
+            """INSERT INTO room_actions
+                   (client_id, room_number, action_type, performed_by,
+                    previous_status, new_status, notes)
+               VALUES (%s, %s, 'status_change', %s, %s, %s, %s)""",
+            (cid, prev.get("room_number"), who,
+             _room_status.normalize(prev.get("status")), status, "تغيير من الخريطة"))
+    except Exception:
+        log.warning("تعذّر تسجيل تغيير حالة الغرفة %s للمنشأة %s", room_id, cid)
+    return {"success": True, "data": {"id": room_id, "status": status, "by": who}}
 
 
 @router.get("/api/rooms")

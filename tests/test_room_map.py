@@ -41,6 +41,7 @@ class MapDB:
              "floor": 9, "capacity": 2, "base_price": 1, "status": "available", "notes": ""},
         ]
         self.prefs: list[dict] = []
+        self.actions: list[dict] = []
 
     def health(self):
         return {"ok": True}
@@ -51,6 +52,20 @@ class MapDB:
 
         if low.startswith("select id, room_number") and "from rooms" in low:
             return [dict(r) for r in self.rooms if r["client_id"] == p[0]]
+
+        # قراءة الحالة السابقة قبل التغيير (لسجلّ المساءلة)
+        if low.startswith("select room_number, status from rooms"):
+            rid, cid = p
+            r = next((x for x in self.rooms if x["id"] == rid and x["client_id"] == cid), None)
+            return dict(r) if r else None
+
+        if low.startswith("insert into room_actions"):
+            # action_type ثابتٌ في SQL لا مُعامل: المعاملات هي
+            # (client_id, room_number, performed_by, previous, new, notes)
+            self.actions.append({"client_id": p[0], "room_number": p[1],
+                                 "performed_by": p[2], "previous_status": p[3],
+                                 "new_status": p[4]})
+            return 1
 
         if "from room_map_floors" in low:
             return [dict(r) for r in self.prefs if r["client_id"] == p[0]]
@@ -233,6 +248,19 @@ def test_a_writer_can_change_a_room_status(client):
     r = c.patch("/api/rooms/1/status", json={"status": "cleaning"}, cookies=OWNER)
     assert r.status_code == 200
     assert next(x for x in db.rooms if x["id"] == 1)["status"] == "cleaning"
+
+
+def test_status_change_is_logged_with_the_actor(client):
+    """التغيير يُسجَّل في room_actions باسم من نفّذه ومن أيّ حالةٍ إلى أيّ."""
+    c, db = client
+    r = c.patch("/api/rooms/1/status", json={"status": "maintenance"}, cookies=OWNER)
+    assert r.status_code == 200
+    assert r.json()["data"]["by"]                     # الرد يحمل اسم المنفّذ
+    logged = [a for a in db.actions if a["room_number"] == "101"]
+    assert logged, "لم يُسجَّل تغيير الحالة"
+    assert logged[-1]["performed_by"]                 # لا سطرَ بلا فاعل
+    assert logged[-1]["previous_status"] == "available"
+    assert logged[-1]["new_status"] == "maintenance"
 
 
 def test_legacy_status_is_normalized_not_stored_verbatim(client):
