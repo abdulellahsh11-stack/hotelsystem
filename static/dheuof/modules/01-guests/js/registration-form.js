@@ -140,29 +140,103 @@ setTimeout(function(){
   }
 
   /* ─── 5. CHECK-IN/OUT TIME POLICY ────────────────────────────── */
+  // السياسة تُقرأ من الخادم وتُحفَظ فيه — لا قيمةٌ ثابتة في الواجهة، ولا
+  // زرُّ حفظٍ يدّعي النجاح بلا نداء. الحفظ لمالك المنشأة ومديرها وحدهما
+  // (الخادم يفرضه)، وزرّ التعديل يُخفى عمّن لا يملكه بحسب `can_edit`.
+  var POLICY = null;          // آخر سياسةٍ حُمِّلت من الخادم
+  var POLICY_CAN_EDIT = false;
+
+  // «14:00» → «٢:٠٠م» للعرض العربي.
+  function fmtTime(hhmm){
+    var m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm||''));
+    if(!m) return hhmm||'';
+    var h = parseInt(m[1],10), mer = h<12?'ص':'م', h12 = (h%12)||12;
+    var ar = function(s){ return String(s).replace(/\d/g,function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; }); };
+    return ar(h12)+':'+ar(m[2])+mer;
+  }
+
+  function renderPolicyHint(){
+    var hint = q('#arr-time-hint'); if(!hint || !POLICY) return;
+    var edit = POLICY_CAN_EDIT
+      ? ' · <span id="edit-policy" style="color:var(--gold-700);cursor:pointer;text-decoration:underline;font-size:10px">تعديل السياسة</span>'
+      : '';
+    hint.innerHTML='سياسة الفندق: الدخول <strong style="color:var(--brand-700)">'+fmtTime(POLICY.checkin_time)+'</strong>'
+      +' · الخروج <strong style="color:var(--brand-700)">'+fmtTime(POLICY.checkout_time)+'</strong>'+edit;
+    var ep = document.getElementById('edit-policy');
+    if(ep) ep.addEventListener('click', openPolicyModal);
+  }
+
+  function openPolicyModal(){
+    var p = POLICY || {};
+    modal('سياسة الدخول والخروج — تخصيص المنشأة',
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'
+        +'<div class="gr-field"><label style="font-size:12px;font-weight:500">وقت الدخول الافتراضي</label>'
+          +'<input id="pol-ci" type="time" value="'+(p.checkin_time||'14:00')+'" style="font-family:var(--font-mono);padding:10px;border:1px solid var(--ink-100);border-radius:6px;font-size:14px;width:100%"/>'
+          +'<span style="font-size:11px;color:var(--fg-3)">Check-in · سياسة الفندق</span></div>'
+        +'<div class="gr-field"><label style="font-size:12px;font-weight:500">وقت الخروج الافتراضي</label>'
+          +'<input id="pol-co" type="time" value="'+(p.checkout_time||'12:00')+'" style="font-family:var(--font-mono);padding:10px;border:1px solid var(--ink-100);border-radius:6px;font-size:14px;width:100%"/>'
+          +'<span style="font-size:11px;color:var(--fg-3)">Check-out · سياسة الفندق</span></div>'
+      +'</div>'
+      +'<div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:10px;padding:14px;font-size:12px;margin-bottom:14px">'
+        +'<div style="font-weight:600;margin-bottom:8px">الحالات الخاصة</div>'
+        +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px"><input id="pol-early" type="checkbox" '+(p.early_checkin_free?'checked':'')+' style="accent-color:var(--brand-700)"/> السماح بالدخول المبكر عند توفر الغرفة (بدون رسوم)</label>'
+        +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input id="pol-late" type="checkbox" '+(p.late_checkout_fee_enabled?'checked':'')+' style="accent-color:var(--brand-700)"/> تأخير الخروج بمقابل إضافي — <input id="pol-fee" type="number" min="0" value="'+(p.late_checkout_fee!=null?p.late_checkout_fee:200)+'" style="width:80px;padding:4px 8px;border:1px solid var(--ink-100);border-radius:4px;font-size:12px"/> ر.س لكل <input id="pol-block" type="number" min="1" value="'+(p.late_checkout_block_hours||3)+'" style="width:56px;padding:4px 8px;border:1px solid var(--ink-100);border-radius:4px;font-size:12px"/> ساعات</label>'
+      +'</div>'
+      +'<button id="pol-save" style="font-family:var(--font-ar);font-size:13px;font-weight:600;padding:10px;border-radius:8px;background:var(--brand-700);color:var(--paper);border:none;cursor:pointer;width:100%">حفظ السياسة</button>'
+    );
+    var btn = document.getElementById('pol-save');
+    if(btn) btn.addEventListener('click', savePolicy);
+  }
+
+  // حفظٌ حقيقي: يُرسل السياسة للخادم، ولا يُعلن النجاح إلا على ردٍّ ناجح.
+  function savePolicy(){
+    var btn = document.getElementById('pol-save');
+    var body = {
+      checkin_time: (q('#pol-ci')||{}).value || '14:00',
+      checkout_time: (q('#pol-co')||{}).value || '12:00',
+      early_checkin_free: !!(q('#pol-early')||{}).checked,
+      late_checkout_fee_enabled: !!(q('#pol-late')||{}).checked,
+      late_checkout_fee: parseInt((q('#pol-fee')||{}).value,10) || 0,
+      late_checkout_block_hours: parseInt((q('#pol-block')||{}).value,10) || 3
+    };
+    if(btn){ btn.disabled=true; btn.textContent='جارٍ الحفظ…'; }
+    fetch('/api/settings/stay-policy', {
+      method:'POST', credentials:'same-origin',
+      headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+      body: JSON.stringify(body)
+    }).then(function(res){
+      return res.json().catch(function(){ return {}; }).then(function(b){ return {ok:res.ok, b:b}; });
+    }).then(function(r){
+      if(!r.ok){
+        if(btn){ btn.disabled=false; btn.textContent='حفظ السياسة'; }
+        toast((r.b && (r.b.detail||r.b.error)) || 'تعذّر حفظ السياسة', true);
+        return;
+      }
+      POLICY = (r.b && r.b.data && r.b.data.policy) || body;
+      var bd=q('.dh-modal-bd'); if(bd) bd.remove();
+      renderPolicyHint();
+      toast('تم حفظ سياسة الدخول والخروج');
+    }).catch(function(){
+      if(btn){ btn.disabled=false; btn.textContent='حفظ السياسة'; }
+      toast('تعذّر الاتصال بالخادم', true);
+    });
+  }
+  window.GR.savePolicy = savePolicy;
+
   function initTimePolicy(){
     var hint = q('#arr-time-hint'); if(!hint) return;
-    hint.innerHTML='سياسة الفندق: الدخول <strong style="color:var(--brand-700)">٢:٠٠م</strong> · الخروج <strong style="color:var(--brand-700)">١٢:٠٠م</strong>'
-      +' · <span id="edit-policy" style="color:var(--gold-700);cursor:pointer;text-decoration:underline;font-size:10px">تعديل السياسة</span>';
-    var ep = document.getElementById('edit-policy'); if(!ep) return;
-    ep.addEventListener('click', function(){
-      modal('سياسة الدخول والخروج — تخصيص المنشأة',
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'
-          +'<div class="gr-field"><label style="font-size:12px;font-weight:500">وقت الدخول الافتراضي</label>'
-            +'<input type="time" value="14:00" style="font-family:var(--font-mono);padding:10px;border:1px solid var(--ink-100);border-radius:6px;font-size:14px;width:100%"/>'
-            +'<span style="font-size:11px;color:var(--fg-3)">Check-in · سياسة الفندق</span></div>'
-          +'<div class="gr-field"><label style="font-size:12px;font-weight:500">وقت الخروج الافتراضي</label>'
-            +'<input type="time" value="12:00" style="font-family:var(--font-mono);padding:10px;border:1px solid var(--ink-100);border-radius:6px;font-size:14px;width:100%"/>'
-            +'<span style="font-size:11px;color:var(--fg-3)">Check-out · سياسة الفندق</span></div>'
-        +'</div>'
-        +'<div style="background:var(--gold-50);border:1px solid var(--gold-200);border-radius:10px;padding:14px;font-size:12px;margin-bottom:14px">'
-          +'<div style="font-weight:600;margin-bottom:8px">الحالات الخاصة</div>'
-          +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px"><input type="checkbox" checked style="accent-color:var(--brand-700)"/> السماح بالدخول المبكر عند توفر الغرفة (بدون رسوم)</label>'
-          +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="accent-color:var(--brand-700)"/> تأخير الخروج بمقابل إضافي — <input type="text" value="٢٠٠ ر.س" style="width:100px;padding:4px 8px;border:1px solid var(--ink-100);border-radius:4px;font-size:12px"/> لكل ٣ ساعات</label>'
-        +'</div>'
-        +'<button onclick="document.querySelector(\'.dh-modal-bd\').remove();window.GR.toast(\'تم حفظ سياسة الدخول والخروج\')" style="font-family:var(--font-ar);font-size:13px;font-weight:600;padding:10px;border-radius:8px;background:var(--brand-700);color:var(--paper);border:none;cursor:pointer;width:100%">حفظ السياسة</button>'
-      );
-    });
+    fetch('/api/settings/stay-policy', { credentials:'same-origin', headers:{ 'Accept':'application/json' } })
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(body){
+        var d = body && body.data;
+        POLICY = (d && d.policy) || { checkin_time:'14:00', checkout_time:'12:00' };
+        POLICY_CAN_EDIT = !!(d && d.can_edit);
+        renderPolicyHint();
+      })
+      .catch(function(){
+        POLICY = { checkin_time:'14:00', checkout_time:'12:00' };
+        renderPolicyHint();
+      });
   }
 
   /* ─── 6. VEHICLE + DRIVER ─────────────────────────────────────── */
