@@ -85,6 +85,52 @@ async def set_guest_required_fields(request: Request, session=Depends(require_ma
     return {"success": True, "data": {"required": fields}}
 
 
+# ──────────────────────────────────────────────────────────────
+#  سياسة الدخول والخروج — تخصيص المنشأة
+# ──────────────────────────────────────────────────────────────
+def _may_edit_policy(session: dict) -> bool:
+    """التخصيص لمالك المنشأة ومديرها العام وحدهما."""
+    from db.access import MANAGER, OWNER, role_of
+
+    return role_of(session) in (OWNER, MANAGER)
+
+
+@router.get("/api/settings/stay-policy")
+async def get_stay_policy(request: Request, session=Depends(require_client)):
+    """سياسة الدخول/الخروج الحالية — يقرأها كل موظفٍ لعرض التلميح والافتراضات.
+
+    `can_edit` تُخبر الواجهة بإخفاء زرّ التعديل عمّن لا يملكه؛ والخادم
+    يفرض ذلك مجدّداً عند الحفظ فلا تكفي الواجهة وحدها."""
+    from services import stay_policy
+
+    client = request.app.state.store.get_client(session["client_id"]) or {}
+    return {"success": True, "data": {
+        "policy": stay_policy.get_policy(client),
+        "can_edit": _may_edit_policy(session),
+    }}
+
+
+@router.post("/api/settings/stay-policy")
+async def set_stay_policy(request: Request, session=Depends(require_manager)):
+    """يحفظ سياسة الدخول/الخروج — مالك المنشأة ومديرها العام وحدهما.
+
+    يُقرأ السجل كاملاً ويُعاد حفظه كي لا تُمَسّ بقيّة الإعدادات (ومنها حقول
+    الحساب في `_account`)."""
+    from services import stay_policy
+
+    data = await request.json()
+    policy = stay_policy.sanitize(data if isinstance(data, dict) else {})
+    store = request.app.state.store
+    client = store.get_client(session["client_id"])
+    if not client:
+        raise HTTPException(status_code=404, detail="المنشأة غير موجودة")
+    settings = dict(client.get("settings") or {})
+    settings["stay_policy"] = policy
+    client["settings"] = settings
+    store.save_client(client)
+    return {"success": True, "data": {"policy": policy}}
+
+
 @router.post("/api/guests")
 async def save_guest(request: Request, session=Depends(require_client)):
     data = await request.json()
