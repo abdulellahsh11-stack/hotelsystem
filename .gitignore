@@ -18,6 +18,3 @@ test_results/
 scripts/generate_*.py
 venv/
 .claude/worktrees/
-
-# سجلّ حركة طاقم الأوركستريتر (وقت التشغيل)
-orchestrator/_activity/
