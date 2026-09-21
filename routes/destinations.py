@@ -44,7 +44,7 @@ async def list_destinations(request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in list_destinations: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/destinations")
@@ -83,7 +83,7 @@ async def create_destination(request: Request, session=Depends(_require_client))
         raise
     except Exception as e:
         logger.error(f"Error in create_destination: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.put("/destinations/{dest_id}")
@@ -111,7 +111,7 @@ async def update_destination(dest_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in update_destination: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.delete("/destinations/{dest_id}")
@@ -129,7 +129,7 @@ async def delete_destination(dest_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in delete_destination: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─── نقاط الاهتمام POI ────────────────────────────────────────
@@ -151,7 +151,7 @@ async def list_pois(dest_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in list_pois: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/destinations/{dest_id}/pois")
@@ -176,7 +176,7 @@ async def add_poi(dest_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in add_poi: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─── حجوزات الوجهات ───────────────────────────────────────────
@@ -206,7 +206,7 @@ async def list_dest_bookings(request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in list_dest_bookings: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/dest-bookings")
@@ -248,7 +248,7 @@ async def book_destination(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in book_destination: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─── تقييمات الوجهات ──────────────────────────────────────────
@@ -272,7 +272,7 @@ async def list_reviews(dest_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in list_reviews: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/destinations/{dest_id}/reviews")
@@ -311,7 +311,7 @@ async def add_review(dest_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in add_review: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─── إحصاءات ─────────────────────────────────────────────────
@@ -349,4 +349,4 @@ async def destinations_stats(request: Request, session=Depends(_require_client))
         raise
     except Exception as e:
         logger.error(f"Error in destinations_stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

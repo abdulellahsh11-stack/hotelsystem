@@ -42,7 +42,7 @@ async def list_employees(request: Request, status: Optional[str] = None, page: i
         raise
     except Exception as e:
         logger.error(f"Error in list_employees: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/employees")
@@ -74,7 +74,7 @@ async def create_employee(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_employee: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.put("/employees/{emp_id}")
@@ -99,7 +99,7 @@ async def update_employee(emp_id: int, request: Request, session=Depends(_requir
         raise
     except Exception as e:
         logger.error(f"Error in update_employee: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.delete("/employees/{emp_id}")
@@ -114,7 +114,7 @@ async def delete_employee(emp_id: int, request: Request, session=Depends(_requir
         raise
     except Exception as e:
         logger.error(f"Error in delete_employee: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/attendance")
@@ -140,7 +140,7 @@ async def list_attendance(request: Request, date_from: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_attendance: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/attendance")
@@ -169,7 +169,7 @@ async def record_attendance(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in record_attendance: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/payroll")
@@ -193,7 +193,7 @@ async def list_payroll(request: Request, year: Optional[int] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_payroll: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/payroll/generate")
@@ -233,4 +233,4 @@ async def generate_payroll(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in generate_payroll: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

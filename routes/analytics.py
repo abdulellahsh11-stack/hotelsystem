@@ -72,7 +72,7 @@ async def analytics_overview(request: Request, session=Depends(_require_client))
         raise
     except Exception as e:
         logger.error(f"Error in analytics_overview: {e}", exc_info=True)
-        raise HTTPException(500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(500, detail="خطأ في الخادم")
 
 
 @router.get("/revenue-trend")
@@ -91,7 +91,7 @@ async def revenue_trend(request: Request, months: int = 6, session=Depends(_requ
         raise
     except Exception as e:
         logger.error(f"Error in revenue_trend: {e}", exc_info=True)
-        raise HTTPException(500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(500, detail="خطأ في الخادم")
 
 
 @router.get("/occupancy-heatmap")
@@ -110,4 +110,4 @@ async def occupancy_heatmap(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in occupancy_heatmap: {e}", exc_info=True)
-        raise HTTPException(500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(500, detail="خطأ في الخادم")

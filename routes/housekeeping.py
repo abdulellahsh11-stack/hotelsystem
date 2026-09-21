@@ -37,7 +37,7 @@ async def list_tasks(request: Request, status: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_tasks: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/tasks")
@@ -60,7 +60,7 @@ async def create_task(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_task: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.put("/tasks/{task_id}/status")
@@ -88,7 +88,7 @@ async def update_task_status(task_id: int, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in update_task_status: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Rooms ──────────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ async def rooms_status(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in rooms_status: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/rooms/{room_number}/checkout")
@@ -185,7 +185,7 @@ async def checkout_room(room_number: str, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in checkout_room: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/rooms/{room_number}/clean")
@@ -237,7 +237,7 @@ async def mark_room_clean(room_number: str, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in mark_room_clean: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/rooms/{room_number}/history")
@@ -261,7 +261,7 @@ async def room_history(room_number: str, request: Request,
         raise
     except Exception as e:
         logger.error(f"Error in room_history: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Lost & Found ───────────────────────────────────────────────────────────
@@ -281,7 +281,7 @@ async def list_lost_found(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_lost_found: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/lost-found")
@@ -304,4 +304,4 @@ async def add_lost_found(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in add_lost_found: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

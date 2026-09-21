@@ -46,7 +46,7 @@ async def get_company_profile(request: Request, session=Depends(_require_client)
         raise
     except Exception as e:
         logger.error(f"Error in get_company_profile: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/company-profile")
@@ -82,7 +82,7 @@ async def set_company_profile(request: Request, session=Depends(_require_client)
         raise
     except Exception as e:
         logger.error(f"Error in set_company_profile: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Tax Configuration ─────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ async def get_tax_config(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in get_tax_config: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/tax-config")
@@ -164,7 +164,7 @@ async def set_tax_config(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in set_tax_config: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Invoices ──────────────────────────────────────────────────────────────────
@@ -226,7 +226,7 @@ async def list_invoices(
         raise
     except Exception as e:
         logger.error(f"Error in list_invoices: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/revenue/summary")
@@ -276,7 +276,7 @@ async def revenue_summary(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in revenue_summary: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/revenue/by-month")
@@ -314,7 +314,7 @@ async def revenue_by_month(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in revenue_by_month: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/export")
@@ -402,7 +402,7 @@ async def list_outstanding(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_outstanding: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/payment")
@@ -459,7 +459,7 @@ async def record_payment(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in record_payment: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── مفتاح API للربط بالأنظمة الخارجية ───────────────────────────────────────
@@ -483,7 +483,7 @@ async def get_api_key(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in get_api_key: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/api-key/rotate")
@@ -502,7 +502,7 @@ async def rotate_api_key(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in rotate_api_key: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Open Accounting API — للربط بالأنظمة المحاسبية الخارجية ──────────────────

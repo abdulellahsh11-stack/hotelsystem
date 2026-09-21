@@ -43,7 +43,7 @@ async def today_arrivals(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in today_arrivals: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/departures")
@@ -72,7 +72,7 @@ async def today_departures(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in today_departures: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/checkin/{booking_id}")
@@ -108,7 +108,7 @@ async def checkin(booking_id: str, request: Request, session=Depends(_require_cl
         raise
     except Exception as e:
         logger.error(f"Error in checkin: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/checkout/{booking_id}")
@@ -186,7 +186,7 @@ async def checkout(booking_id: str, request: Request, session=Depends(_require_c
         raise
     except Exception as e:
         logger.error(f"Error in checkout: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/shifts")
@@ -204,7 +204,7 @@ async def list_shifts(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_shifts: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/shifts/open")
@@ -227,7 +227,7 @@ async def open_shift(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in open_shift: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/shifts/{shift_id}/close")
@@ -246,7 +246,7 @@ async def close_shift(shift_id: int, request: Request, session=Depends(_require_
         raise
     except Exception as e:
         logger.error(f"Error in close_shift: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/rooms/availability")
@@ -274,4 +274,4 @@ async def room_availability(request: Request, date_from: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in room_availability: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

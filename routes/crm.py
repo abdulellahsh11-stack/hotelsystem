@@ -35,7 +35,7 @@ async def list_contacts(request: Request, segment: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_contacts: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/loyalty/{guest_id}")
@@ -60,7 +60,7 @@ async def guest_loyalty(guest_id: int, request: Request, session=Depends(_requir
         raise
     except Exception as e:
         logger.error(f"Error in guest_loyalty: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/loyalty/award")
@@ -90,7 +90,7 @@ async def award_points(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in award_points: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/campaigns")
@@ -108,7 +108,7 @@ async def list_campaigns(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_campaigns: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/campaigns")
@@ -133,7 +133,7 @@ async def create_campaign(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_campaign: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/stats")
@@ -159,4 +159,4 @@ async def crm_stats(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in crm_stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

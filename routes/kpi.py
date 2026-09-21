@@ -90,7 +90,7 @@ async def kpi_dashboard(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in kpi_dashboard: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/revpar")
@@ -110,7 +110,7 @@ async def revpar_trend(request: Request, days: int = 30, session=Depends(_requir
         raise
     except Exception as e:
         logger.error(f"Error in revpar_trend: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/recalculate")
@@ -158,7 +158,7 @@ async def recalculate_kpis(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in recalculate_kpis: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/revenue-by-room-type")
