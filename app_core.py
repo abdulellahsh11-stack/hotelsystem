@@ -19,7 +19,7 @@ from typing import Optional
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 
@@ -507,6 +507,34 @@ async def _stamp_html_response(response):
             return _Response(content=b"".join(chunks), status_code=response.status_code,
                              headers=headers, media_type=response.media_type)
         return response
+
+
+@app.middleware("http")
+async def force_https_redirect(request: Request, call_next):
+    """يحوّل http→https خلف الوسيط العكسي. لا يُطبَّق محلياً (localhost) حتى
+    لا يُقفل التطوير، ولا على مسارات الصحّة. يُعطَّل بـ FORCE_HTTPS=0."""
+    # نحوّل فقط حين يُعلن الوسيط العكسي صراحةً أن الأصل http — لا نستنتج من
+    # scheme حتى لا يقع تحويلٌ على الطلبات المباشرة/المحلية/الاختبارات.
+    if os.environ.get("FORCE_HTTPS", "1") == "1":
+        proto = request.headers.get("x-forwarded-proto")
+        host = (request.url.hostname or "").lower()
+        is_local = host in ("localhost", "127.0.0.1", "0.0.0.0") or host.endswith(".local")
+        if proto == "http" and not is_local:
+            target = request.url.replace(scheme="https")
+            return RedirectResponse(str(target), status_code=308)
+    return await call_next(request)
+
+
+@app.exception_handler(404)
+async def custom_404(request: Request, exc):
+    """صفحة 404 مخصّصة لطلبات الصفحات؛ يبقى الرد JSON لمسارات الـ API."""
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "غير موجود"}, status_code=404)
+    page = os.path.join("static", "404.html")
+    if os.path.exists(page):
+        with open(page, encoding="utf-8") as f:
+            return HTMLResponse(f.read(), status_code=404)
+    return HTMLResponse("<h1>404 — الصفحة غير موجودة</h1>", status_code=404)
 
 
 @app.middleware("http")

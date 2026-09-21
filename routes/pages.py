@@ -35,11 +35,39 @@ def _serve(path: str) -> Optional[HTMLResponse]:
     return None
 
 
+def _ga_snippet() -> str:
+    """مقتطف Google Analytics — يُحقن فقط إن ضُبط GA_MEASUREMENT_ID، وإلا فراغ.
+    لا يُكتب المعرّف في الكود؛ يأتي من البيئة."""
+    gid = os.environ.get("GA_MEASUREMENT_ID", "").strip()
+    if not gid:
+        return ""
+    # المعرّف مقيَّد بالنمط G-XXXX فلا يُحقن نصٌّ عشوائي
+    import re as _re
+    if not _re.fullmatch(r"G-[A-Z0-9]{4,20}", gid):
+        return ""
+    return (
+        f'<script async src="https://www.googletagmanager.com/gtag/js?id={gid}"></script>\n'
+        '<script>window.dataLayer=window.dataLayer||[];'
+        'function gtag(){dataLayer.push(arguments);}gtag("js",new Date());'
+        f'gtag("config","{gid}");</script>'
+    )
+
+
+def _serve_marketing() -> Optional[HTMLResponse]:
+    """الموقع التسويقي مع حقن مقتطف التحليلات مكان العلامة عند الحاجة."""
+    if not os.path.exists(_MARKETING_PAGE):
+        return None
+    with open(_MARKETING_PAGE, encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("<!--#GA_SNIPPET#-->", _ga_snippet())
+    return HTMLResponse(html)
+
+
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     # الزائر غير المسجَّل يرى الموقع التسويقي؛ العميل المسجَّل يذهب للوحة البرامج
     if get_client_session(request) is None:
-        page = _serve(_MARKETING_PAGE)
+        page = _serve_marketing()
         if page is not None:
             return page
     return _serve(_APP_LAUNCHER) or HTMLResponse(_login_page())
@@ -81,7 +109,7 @@ async def pwa_service_worker():
 async def marketing_page(request: Request):
     # نفس صفحة "/" التسويقية — محفوظ للتوافق مع الروابط القديمة.
     # الـ canonical داخل الصفحة يشير إلى "/" فلا يقع تكرار محتوى.
-    return _serve(_MARKETING_PAGE) or HTMLResponse(_login_page())
+    return _serve_marketing() or HTMLResponse(_login_page())
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -239,6 +267,8 @@ _SITEMAP_URLS = [
     ("/static/dheuof/packages.html",   "monthly", "0.8"),
     ("/static/dheuof/onboarding.html", "monthly", "0.7"),
     ("/static/dheuof/api-docs.html",   "monthly", "0.6"),
+    ("/privacy",  "yearly", "0.3"),
+    ("/terms",    "yearly", "0.3"),
 ]
 
 
@@ -260,5 +290,47 @@ async def sitemap():
 async def referral_redirect(code: str):
     """رابط الإحالة — يفتح صفحة التسجيل مع كود المسوق محمّل تلقائياً"""
     return HTMLResponse(_login_page(ref_code=code.upper()))
+
+
+# ──────────────────────────────────────────────────────────────
+#  أصول الجذر: أيقونة الموقع وصورة المعاينة الاجتماعية
+# ──────────────────────────────────────────────────────────────
+def _serve_file(path: str, media_type: str) -> Response:
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return Response(content=f.read(), media_type=media_type,
+                            headers={"Cache-Control": "public, max-age=86400"})
+    return Response(status_code=404)
+
+
+@router.get("/favicon.svg")
+async def favicon_svg():
+    return _serve_file(os.path.join("static", "favicon.svg"), "image/svg+xml")
+
+
+@router.get("/favicon.ico")
+async def favicon_ico():
+    # لا ملفّ ico ثنائي — نوجّه إلى نسخة SVG المتّجهة (يدعمها المتصفّح الحديث)
+    return RedirectResponse("/favicon.svg", status_code=301)
+
+
+@router.get("/og-image.png")
+async def og_image():
+    return _serve_file(os.path.join("static", "og-image.png"), "image/png")
+
+
+# ──────────────────────────────────────────────────────────────
+#  الصفحات القانونية (هيكلٌ الآن — النصّ يُضاف لاحقاً)
+# ──────────────────────────────────────────────────────────────
+@router.get("/privacy", response_class=HTMLResponse)
+async def privacy_page():
+    return _serve(os.path.join("static", "dheuof", "website", "privacy.html")) \
+        or HTMLResponse("<h1>سياسة الخصوصية</h1>", status_code=200)
+
+
+@router.get("/terms", response_class=HTMLResponse)
+async def terms_page():
+    return _serve(os.path.join("static", "dheuof", "website", "terms.html")) \
+        or HTMLResponse("<h1>الشروط والأحكام</h1>", status_code=200)
 
 
