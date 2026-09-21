@@ -542,6 +542,15 @@ def run_all_migrations(db) -> None:
             except Exception as e:
                 log.warning(f"  ⚠️ Trigger {trigger_name}: {e}")
 
+        # الجداول الأساسية التي تُنشأ كسولاً أو ضمن ملفٍ يُقسَّم — نضمنها
+        # صراحةً هنا (بترتيب التبعية) قبل هجرات v3/التحصين التي تعتمد عليها،
+        # فلا تبقى قاعدةٌ نظيفة (E2E) بجداولَ ناقصة.
+        try:
+            from db.schema_core_tables import ensure_core_tables
+            ensure_core_tables(db)
+        except Exception as e:
+            log.warning(f"  ⚠️ ensure_core_tables: {e}")
+
         log.info("✅ Database migrations اكتملت بنجاح")
 
     except Exception as e:
