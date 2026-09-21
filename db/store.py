@@ -313,14 +313,16 @@ class DataStore:
                 # RETURNING id: المعرّف الحقيقي يُعيده الخادم. بدونه كان
                 # المستدعي يتلقّى المعرّف الوهمي الذي اخترعه المسار، فيُنشئ
                 # الحجزَ التالي مشيراً إلى نزيلٍ لا وجود له.
+                # created_by يُكتب عند الإنشاء فقط — من سجّل النزيل يبقى
+                # كما هو ولا يُطمَس عند أيّ تعديلٍ لاحق.
                 row = self.db.execute("""
                     INSERT INTO guests
                         (client_id, id_type, id_number, full_name,
                          absher_phone, nationality, birth_date, data_status,
-                         source, notes, id_number_bidx)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                         source, notes, id_number_bidx, created_by)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     RETURNING id
-                """, (client_id,) + values, fetch="one")
+                """, (client_id,) + values + (stored.get("created_by"),), fetch="one")
                 if row:
                     guest = dict(guest)
                     guest["id"] = _to_dict(row).get("id")

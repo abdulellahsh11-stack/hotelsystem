@@ -59,6 +59,9 @@ STAFF_APP_ALTER = [
     "ALTER TABLE rooms ADD COLUMN IF NOT EXISTS last_action_at  TIMESTAMPTZ",
     "ALTER TABLE rooms ADD COLUMN IF NOT EXISTS current_guest   VARCHAR(200)",
     "ALTER TABLE rooms ADD COLUMN IF NOT EXISTS checkout_due    VARCHAR(10)",
+    # سجلّ المساءلة: من سجّل النزيل. اسمُ من أدخل البيانات يُحفَظ مع الصفّ
+    # كي يُعرَف لاحقاً — لا يُشتق من جلسةٍ انتهت.
+    "ALTER TABLE guests ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)",
     # سرّ توقيع حجوزات القنوات. عمودٌ مستقل لا مفتاحٌ في settings، لأن
     # settings تُعاد كاملةً إلى الواجهة فيخرج السرّ معها.
     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS channel_secret VARCHAR(64)",
