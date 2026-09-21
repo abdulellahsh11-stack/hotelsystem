@@ -56,7 +56,7 @@ async def list_items(request: Request, category: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_items: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/items")
@@ -80,7 +80,7 @@ async def create_item(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_item: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/items/{item_id}/adjust")
@@ -108,7 +108,7 @@ async def adjust_stock(item_id: int, request: Request, session=Depends(_require_
         raise
     except Exception as e:
         logger.error(f"Error in adjust_stock: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/suppliers")
@@ -126,7 +126,7 @@ async def list_suppliers(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_suppliers: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/suppliers")
@@ -150,7 +150,7 @@ async def create_supplier(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_supplier: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/purchase-orders")
@@ -178,7 +178,7 @@ async def list_po(request: Request, status: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_po: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/purchase-orders")
@@ -217,7 +217,7 @@ async def create_po(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_po: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/low-stock")
@@ -237,4 +237,4 @@ async def low_stock(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in low_stock: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

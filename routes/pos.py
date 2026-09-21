@@ -111,7 +111,7 @@ async def list_sales(
         raise
     except Exception as e:
         logger.error(f"Error in list_sales: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/sales")
@@ -164,7 +164,7 @@ async def create_sale(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_sale: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.delete("/sales/{sale_id}")
@@ -184,7 +184,7 @@ async def void_sale(sale_id: int, request: Request, session=Depends(_require_cli
         raise
     except Exception as e:
         logger.error(f"Error in void_sale: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Items (product catalog from warehouse_items) ──────────────────────────────
@@ -214,7 +214,7 @@ async def list_items(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_items: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/items")
@@ -248,7 +248,7 @@ async def create_item(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_item: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
@@ -301,4 +301,4 @@ async def pos_stats(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in pos_stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

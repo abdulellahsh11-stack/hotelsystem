@@ -36,7 +36,7 @@ async def list_orders(request: Request, status: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_orders: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/orders")
@@ -97,7 +97,7 @@ async def create_order(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_order: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.put("/orders/{order_id}")
@@ -124,7 +124,7 @@ async def update_order(order_id: int, request: Request, session=Depends(_require
         raise
     except Exception as e:
         logger.error(f"Error in update_order: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/orders/{order_id}/materials")
@@ -153,7 +153,7 @@ async def use_materials(order_id: int, request: Request, session=Depends(_requir
         raise
     except Exception as e:
         logger.error(f"Error in use_materials: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/orders/{order_id}/complete")
@@ -199,7 +199,7 @@ async def complete_order(order_id: int, request: Request, session=Depends(_requi
         raise
     except Exception as e:
         logger.error(f"Error in complete_order: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/assets")
@@ -217,7 +217,7 @@ async def list_assets(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_assets: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/assets")
@@ -244,4 +244,4 @@ async def create_asset(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_asset: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

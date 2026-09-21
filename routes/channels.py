@@ -39,7 +39,7 @@ async def supported(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in supported: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/connections")
@@ -51,7 +51,7 @@ async def connections(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in connections: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/connect")
@@ -70,7 +70,7 @@ async def connect(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in connect: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/disconnect")
@@ -84,7 +84,7 @@ async def disconnect(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in disconnect: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/sync")
@@ -102,7 +102,7 @@ async def sync(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in sync: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/reservations")
@@ -115,7 +115,7 @@ async def reservations(request: Request, status: Optional[str] = None, session=D
         raise
     except Exception as e:
         logger.error(f"Error in reservations: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/log")
@@ -127,7 +127,7 @@ async def sync_log(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in sync_log: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/channel-secret/rotate")
@@ -210,7 +210,7 @@ async def webhook(channel_code: str, request: Request):
         raise
     except Exception as e:
         logger.error(f"Error in webhook: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ──────────────────────────────────────────────────────────────

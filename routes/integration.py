@@ -301,7 +301,7 @@ async def integrated_checkin(request: Request, session=Depends(_require_client))
         raise
     except Exception as e:
         logger.error(f"Error in integrated_checkin: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/checkout")
@@ -383,7 +383,7 @@ async def integrated_checkout(request: Request, session=Depends(_require_client)
         raise
     except Exception as e:
         logger.error(f"Error in integrated_checkout: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -500,7 +500,7 @@ async def close_maintenance_order(request: Request, session=Depends(_require_cli
         raise
     except Exception as e:
         logger.error(f"Error in close_maintenance_order: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -531,7 +531,7 @@ async def get_amenity_kit(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in get_amenity_kit: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/amenity-kit")
@@ -563,7 +563,7 @@ async def set_amenity_kit_item(request: Request, session=Depends(_require_client
         raise
     except Exception as e:
         logger.error(f"Error in set_amenity_kit_item: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.delete("/amenity-kit/{item_id}")
@@ -582,7 +582,7 @@ async def remove_amenity_kit_item(item_id: int, request: Request, session=Depend
         raise
     except Exception as e:
         logger.error(f"Error in remove_amenity_kit_item: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -641,4 +641,4 @@ async def integration_dashboard(request: Request, session=Depends(_require_clien
         raise
     except Exception as e:
         logger.error(f"Error in integration_dashboard: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")

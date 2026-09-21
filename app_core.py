@@ -399,6 +399,21 @@ _ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "CORS_ORIGINS",
     "https://www.dheuof.com,https://dheuof.com,http://localhost:5050,http://127.0.0.1:5050",
 ).split(",") if o.strip()]
+
+# سياسة أمن المحتوى: افتراضٌ متحفّظٌ يمنع مصادر السكربت الخارجية، ويُضبط
+# بمتغيّر البيئة CSP_POLICY إن لزم توسيعها. 'unsafe-inline' للأنماط فقط.
+_CSP_POLICY = os.environ.get(
+    "CSP_POLICY",
+    "default-src 'self'; "
+    "img-src 'self' data:; "
+    "font-src 'self' data:; "
+    "style-src 'self' 'unsafe-inline'; "
+    "script-src 'self'; "
+    "connect-src 'self'; "
+    "frame-ancestors 'self'; "
+    "base-uri 'self'; "
+    "object-src 'none'",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
@@ -521,6 +536,13 @@ async def add_security_and_cache_headers(request: Request, call_next):
     response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    # سياسة محتوى متحفّظة: نفس المصدر، مع صور/خطوط data: وأنماطٍ ضمنية.
+    # يُضبط بـ CSP_POLICY عند الحاجة لتوسعتها لنطاقٍ خارجي.
+    response.headers.setdefault("Content-Security-Policy", _CSP_POLICY)
+    # HSTS على HTTPS فقط: لا نفرضه على http المحلي حتى لا نقفل التطوير.
+    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return response
 
 

@@ -31,7 +31,7 @@ async def list_tours(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in list_tours: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/tours")
@@ -63,7 +63,7 @@ async def create_tour(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in create_tour: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.put("/tours/{tour_id}")
@@ -86,7 +86,7 @@ async def update_tour(tour_id: int, request: Request, session=Depends(_require_c
         raise
     except Exception as e:
         logger.error(f"Error in update_tour: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/bookings")
@@ -112,7 +112,7 @@ async def list_tour_bookings(request: Request, date_from: Optional[str] = None,
         raise
     except Exception as e:
         logger.error(f"Error in list_tour_bookings: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.post("/bookings")
@@ -149,7 +149,7 @@ async def book_tour(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in book_tour: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
 
 
 @router.get("/stats")
@@ -176,4 +176,4 @@ async def tour_stats(request: Request, session=Depends(_require_client)):
         raise
     except Exception as e:
         logger.error(f"Error in tour_stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"خطأ في الخادم: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطأ في الخادم")
