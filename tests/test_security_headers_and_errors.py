@@ -52,6 +52,8 @@ def test_core_security_headers_present():
     assert r.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in r.headers["Content-Security-Policy"]
     assert "object-src 'none'" in r.headers["Content-Security-Policy"]
+    # لا مصادر سكربت خارجية: 'self' فقط (مع unsafe-inline للسكربت الضمني)
+    assert "script-src 'self'" in r.headers["Content-Security-Policy"]
 
 
 def test_hsts_present_behind_https_proxy():

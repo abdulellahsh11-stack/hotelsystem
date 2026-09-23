@@ -401,14 +401,17 @@ _ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
 ).split(",") if o.strip()]
 
 # سياسة أمن المحتوى: افتراضٌ متحفّظٌ يمنع مصادر السكربت الخارجية، ويُضبط
-# بمتغيّر البيئة CSP_POLICY إن لزم توسيعها. 'unsafe-inline' للأنماط فقط.
+# بمتغيّر البيئة CSP_POLICY إن لزم توسيعها. 'unsafe-inline' للأنماط
+# وللسكربتات الضمنية: صفحات الدخول والتسجيل تعتمد سكربتاً ضمنياً ومعالجات
+# on* مضمّنة (fetch بلا form action)، فمنعُها يكسر تسجيل الدخول والتسجيل.
+# المصادر الخارجية تبقى ممنوعة ('self' فقط)، فلا حقن سكربت من نطاقٍ آخر.
 _CSP_POLICY = os.environ.get(
     "CSP_POLICY",
     "default-src 'self'; "
     "img-src 'self' data:; "
     "font-src 'self' data:; "
     "style-src 'self' 'unsafe-inline'; "
-    "script-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
     "connect-src 'self'; "
     "frame-ancestors 'self'; "
     "base-uri 'self'; "
