@@ -52,6 +52,8 @@ def test_core_security_headers_present():
     assert r.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in r.headers["Content-Security-Policy"]
     assert "object-src 'none'" in r.headers["Content-Security-Policy"]
+    # لا مصادر سكربت خارجية: 'self' فقط (مع unsafe-inline للسكربت الضمني)
+    assert "script-src 'self'" in r.headers["Content-Security-Policy"]
 
 
 def test_hsts_present_behind_https_proxy():
@@ -62,6 +64,8 @@ def test_hsts_present_behind_https_proxy():
 
 
 def test_hsts_absent_on_plain_http():
-    """لا نفرض HSTS على http المحلي حتى لا نقفل التطوير."""
-    r = client.get("/", headers={"x-forwarded-proto": "http"})
+    """لا نفرض HSTS على http المحلي حتى لا نقفل التطوير.
+    نثبّت المضيف على localhost حتى لا يتدخّل تحويل HTTPS للمضيف العام."""
+    r = client.get("/", headers={"x-forwarded-proto": "http", "host": "localhost"},
+                   follow_redirects=False)
     assert "Strict-Transport-Security" not in r.headers
