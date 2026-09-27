@@ -150,40 +150,6 @@ async def analytics_overview(request: Request, session=Depends(require_client)):
 
 
 # ──────────────────────────────────────────────────────────────
-#  AI Analyze
-# ──────────────────────────────────────────────────────────────
-@router.post("/api/ai/analyze")
-async def ai_analyze(request: Request, session=Depends(require_client)):
-    body = await request.json()
-    prompt = body.get("prompt", "")
-    if not prompt:
-        return JSONResponse({"success": False, "error": "الـ prompt مطلوب"}, status_code=400)
-
-    cfg = request.app.state.cfg
-    if not cfg.anthropic_api_key:
-        return {"success": False, "error": "خدمة الذكاء الاصطناعي غير مُفعَّلة", "response": "خدمة الذكاء الاصطناعي غير متوفرة حالياً. يرجى إضافة ANTHROPIC_API_KEY في إعدادات النظام."}
-
-    try:
-        import anthropic
-        store = request.app.state.store
-        cid = session["client_id"]
-        bookings = store.get_bookings(cid)
-        guests = store.get_guests(cid)
-        invoices = store.get_invoices(cid)
-        ctx = f"إجمالي النزلاء: {len(guests)}, إجمالي الحجوزات: {len(bookings)}, إجمالي الفواتير: {len(invoices)}"
-        client_ai = anthropic.Anthropic(api_key=cfg.anthropic_api_key)
-        msg = client_ai.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": f"أنت مستشار فندقي خبير. البيانات المتاحة: {ctx}\n\nالسؤال: {prompt}"}],
-        )
-        return {"success": True, "response": msg.content[0].text}
-    except Exception as e:
-        log.error(f"AI error: {e}")
-        return {"success": False, "error": str(e), "response": "حدث خطأ في الاتصال بالذكاء الاصطناعي"}
-
-
-# ──────────────────────────────────────────────────────────────
 #  Backup
 # ──────────────────────────────────────────────────────────────
 def _require_backup_access(session: dict) -> None:

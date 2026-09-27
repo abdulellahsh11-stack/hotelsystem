@@ -141,18 +141,14 @@ class DataStore:
             if acct:
                 settings["_account"] = acct
             settings_json = json.dumps(settings, ensure_ascii=False)
-            wa_json = json.dumps(client.get("whatsapp_config", {}), ensure_ascii=False)
-            cb_json = json.dumps(client.get("chatbot_config", {}), ensure_ascii=False)
             inv_json = json.dumps(client.get("invoice_settings", {}), ensure_ascii=False)
-            rv_json = json.dumps(client.get("review_settings", {}), ensure_ascii=False)
 
             if existing:
                 self.db.execute("""
                     UPDATE clients SET
                         name=%s, type=%s, city=%s, region=%s, phone=%s, email=%s,
                         units_count=%s, settings_locked=%s,
-                        settings=%s, whatsapp_config=%s, chatbot_config=%s,
-                        invoice_settings=%s, review_settings=%s
+                        settings=%s, invoice_settings=%s
                     WHERE id=%s
                 """, (
                     client.get("name", client.get("hotel_name", "")),
@@ -163,7 +159,7 @@ class DataStore:
                     client.get("email", ""),
                     int(client.get("units_count", 0)),
                     bool(client.get("settings_locked", False)),
-                    settings_json, wa_json, cb_json, inv_json, rv_json,
+                    settings_json, inv_json,
                     client_id,
                 ))
             else:
@@ -171,9 +167,8 @@ class DataStore:
                     INSERT INTO clients
                         (id, name, type, city, region, phone, email,
                          units_count, settings_locked,
-                         settings, whatsapp_config, chatbot_config,
-                         invoice_settings, review_settings)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                         settings, invoice_settings)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """, (
                     client_id,
                     client.get("name", client.get("hotel_name", "")),
@@ -184,7 +179,7 @@ class DataStore:
                     client.get("email", ""),
                     int(client.get("units_count", 0)),
                     bool(client.get("settings_locked", False)),
-                    settings_json, wa_json, cb_json, inv_json, rv_json,
+                    settings_json, inv_json,
                 ))
 
         if not self._use_pg or self.dual_write:

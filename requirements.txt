@@ -2,7 +2,7 @@ fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 psycopg2-binary>=2.9.9
 python-multipart>=0.0.9
-anthropic>=0.28.0
+anthropic>=1.0.0        # ١.x: adaptive thinking و AsyncAnthropic — ٠.٢٨ لا يعرفهما
 sentry-sdk[fastapi]>=2.0.0
 
 # ── تثبيت إصدارات آمنة للثغرات الأمنية (pip-audit) ────────────

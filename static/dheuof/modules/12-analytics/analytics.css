@@ -555,3 +555,73 @@ body { background: var(--paper-tint); }
 }
 .rp-card:hover .rp-link { transform: translate(2px, -2px); color: var(--gold-700); }
 [dir="rtl"] .rp-card:hover .rp-link { transform: translate(-2px, -2px); }
+
+/* ── الرؤى الذكية — مستشار فندقي ─────────────────────────────── */
+.ai-sec {
+  background: var(--white, #fff); border: 1px solid var(--ink-100, #e6e2da);
+  border-radius: 12px; margin: 0 0 22px; overflow: hidden;
+}
+.ai-sec > h2 {
+  margin: 0; padding: 15px 20px; font-size: 16px; font-weight: 700;
+  border-bottom: 1px solid var(--ink-100, #e6e2da);
+  background: var(--paper, #faf8f4);
+  display: flex; align-items: center; gap: 9px;
+}
+.ai-badge {
+  padding: 2px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 600;
+  background: rgba(27, 77, 61, .1); color: var(--brand-700, #1b4d3d);
+  font-family: var(--font-mono, monospace);
+}
+.ai-body { padding: 16px 20px 20px; }
+
+.ai-on, .ai-off { font-size: 12.5px; margin-bottom: 13px; line-height: 1.8; }
+.ai-on { color: #14602f; font-weight: 600; }
+.ai-off {
+  color: #8a4310; background: rgba(180, 90, 20, .08);
+  padding: 11px 14px; border-radius: 8px;
+}
+
+.ai-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
+.ai-chip {
+  font-family: inherit; font-size: 12px; padding: 6px 13px; border-radius: 20px;
+  border: 1px solid var(--ink-100, #ddd8ce); background: var(--white, #fff);
+  color: var(--ink-700, #3d3a35); cursor: pointer;
+}
+.ai-chip:hover {
+  border-color: var(--brand-700, #1b4d3d); color: var(--brand-700, #1b4d3d);
+}
+
+#ai-q {
+  width: 100%; font-family: inherit; font-size: 13.5px; padding: 11px 13px;
+  border: 1px solid var(--ink-100, #ddd8ce); border-radius: 8px;
+  background: var(--white, #fff); color: inherit; resize: vertical;
+}
+#ai-q:focus { outline: 2px solid var(--brand-700, #1b4d3d); outline-offset: -1px; }
+
+.ai-actions {
+  display: flex; align-items: center; gap: 13px; flex-wrap: wrap; margin-top: 10px;
+}
+.ai-send {
+  font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 22px;
+  border: none; border-radius: 7px;
+  background: var(--brand-700, #1b4d3d); color: #fff; cursor: pointer;
+}
+.ai-send:hover { filter: brightness(1.12); }
+.ai-send:disabled { opacity: .55; cursor: default; }
+.ai-note { font-size: 11.5px; color: var(--ink-500, #6b6b6b); line-height: 1.7; }
+
+#ai-thread { margin-top: 18px; }
+.ai-turn {
+  border: 1px solid var(--ink-100, #e6e2da); border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 11px; background: var(--paper, #faf8f4);
+}
+.ai-turn.is-err { border-color: rgba(176, 42, 42, .3); background: rgba(176, 42, 42, .04); }
+.ai-turn .ai-q {
+  font-size: 13px; font-weight: 700; margin-bottom: 9px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--ink-100, #eee9e1);
+}
+.ai-turn .ai-a { font-size: 13.5px; line-height: 1.95; }
+.ai-turn .ai-a p { margin: 0 0 10px; }
+.ai-turn .ai-a p:last-child { margin-bottom: 0; }
+.ai-dots { color: var(--ink-500, #6b6b6b); font-size: 13px; }
+.ai-trunc { margin-top: 9px; font-size: 11.5px; color: #8a4310; }

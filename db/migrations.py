@@ -29,10 +29,7 @@ CREATE TABLE IF NOT EXISTS clients (
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW(),
     settings         JSONB DEFAULT '{}',
-    whatsapp_config  JSONB DEFAULT '{}',
-    chatbot_config   JSONB DEFAULT '{}',
-    invoice_settings JSONB DEFAULT '{}',
-    review_settings  JSONB DEFAULT '{}'
+    invoice_settings JSONB DEFAULT '{}'
 );
 
 -- الاشتراكات
